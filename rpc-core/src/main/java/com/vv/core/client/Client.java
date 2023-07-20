@@ -21,6 +21,7 @@ import java.util.Date;
 @Data
 public class Client {
     private Logger logger = LoggerFactory.getLogger(Client.class);
+
     private ClientConfig clientConfig;
 
     public static void main(String[] args) throws InterruptedException {
