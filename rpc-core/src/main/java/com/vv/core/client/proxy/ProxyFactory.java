@@ -11,5 +11,5 @@ public interface ProxyFactory {
      * @return
      * @param <T>
      */
-    <T> T getProxy(final Class clazz);
+    <T> T getProxy(final Class clazz) throws Exception;
 }

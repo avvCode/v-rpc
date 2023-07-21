@@ -1,6 +1,7 @@
 package com.vv.core.client;
 
 import com.alibaba.fastjson.JSON;
+import com.vv.core.client.proxy.javassist.JavassistProxyFactory;
 import com.vv.core.client.proxy.jdk.JDKProxyFactory;
 import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
@@ -62,7 +63,7 @@ public class Client {
                 .sync();
         logger.info("==== 客户端启动成功 ====");
         this.startSendThread(channelFuture);
-        Reference reference = new Reference(new JDKProxyFactory());
+        Reference reference = new Reference(new JavassistProxyFactory());
         return reference;
     }
 
