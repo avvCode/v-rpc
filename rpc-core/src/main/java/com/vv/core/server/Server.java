@@ -1,17 +1,14 @@
 package com.vv.core.server;
 
-import com.vv.core.client.Client;
-import io.netty.bootstrap.Bootstrap;
+import com.vv.core.common.RpcDecoder;
+import com.vv.core.common.RpcEncoder;
+import com.vv.core.common.cache.ServerCache;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.string.StringDecoder;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +26,7 @@ public class Server {
         ServerConfig serverConfig = new ServerConfig();
         serverConfig.setPort(8080);
         server.setServerConfig(serverConfig);
+        server.registerService(new DataServiceImpl());
         server.start();
     }
     public void start(){
@@ -36,19 +34,31 @@ public class Server {
         new ServerBootstrap()
                 .group(new NioEventLoopGroup())
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInitializer<NioSocketChannel>() { // 3
+                .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) {
-                        ch.pipeline().addLast(new StringDecoder());
-                        ch.pipeline().addLast(new SimpleChannelInboundHandler<String>() { // 6
-                            @Override
-                            protected void channelRead0(ChannelHandlerContext ctx, String msg) {
-                                System.out.println(msg);
-                            }
-                        });
+                        ch.pipeline()
+                                .addLast(new RpcEncoder())
+                                .addLast(new RpcDecoder())
+                                .addLast(new ServerHandler());
                     }
                 })
                 .bind(serverConfig.getPort());
         logger.info("==== 服务端启动成功 ====");
         logger.info("==== 监听端口：{} ====",serverConfig.getPort());
+    }
+
+    /**
+     * 注册服务
+     * @param serviceBean
+     */
+    public void registerService(Object serviceBean){
+        //只能存在一个共同消费类
+        Class<?>[] interfaces = serviceBean.getClass().getInterfaces();
+        if(interfaces.length != 1){
+            throw new RuntimeException("接口太少或太多");
+        }
+        Class<?> anInterface = interfaces[0];
+        String interfaceName = anInterface.getName();
+        ServerCache.PROVIDER_CLASS_MAP.put(interfaceName,serviceBean);
     }
 }
