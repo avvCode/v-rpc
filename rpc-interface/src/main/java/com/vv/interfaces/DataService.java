@@ -1,4 +1,4 @@
-package org.idea.irpc.framework.interfaces;
+package com.vv.interfaces;
 
 import java.util.List;
 

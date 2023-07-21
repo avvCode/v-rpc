@@ -1,6 +1,6 @@
 package com.vv.core.server;
 
-import org.idea.irpc.framework.interfaces.DataService;
+import com.vv.interfaces.DataService;
 
 import java.util.ArrayList;
 import java.util.List;
