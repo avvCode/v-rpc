@@ -1,13 +1,12 @@
 package com.vv.core.client;
 
 import com.alibaba.fastjson.JSON;
-import com.vv.core.client.proxy.javassist.JavassistProxyFactory;
-import com.vv.core.client.proxy.jdk.JDKProxyFactory;
+import com.vv.core.proxy.javassist.JavassistProxyFactory;
 import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.RpcProtocol;
-import com.vv.core.common.cache.ClientCache;
+import com.vv.core.common.ClientCache;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

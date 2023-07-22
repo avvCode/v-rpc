@@ -60,5 +60,6 @@ public class Server {
         Class<?> anInterface = interfaces[0];
         String interfaceName = anInterface.getName();
         ServerCache.PROVIDER_CLASS_MAP.put(interfaceName,serviceBean);
+
     }
 }

@@ -1,6 +1,6 @@
-package com.vv.core.client.proxy.jdk;
+package com.vv.core.proxy.jdk;
 
-import com.vv.core.client.proxy.ProxyFactory;
+import com.vv.core.proxy.ProxyFactory;
 
 import java.lang.reflect.Proxy;
 

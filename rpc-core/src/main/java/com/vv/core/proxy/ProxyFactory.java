@@ -1,4 +1,4 @@
-package com.vv.core.client.proxy;
+package com.vv.core.proxy;
 
 /**
  * @author vv

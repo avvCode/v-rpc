@@ -3,7 +3,6 @@ package com.vv.core.client;
 import com.alibaba.fastjson.JSON;
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.RpcProtocol;
-import com.vv.core.common.cache.ClientCache;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -11,7 +10,7 @@ import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.vv.core.common.cache.ClientCache.RESP_MAP;
+import static com.vv.core.common.ClientCache.RESP_MAP;
 
 
 /**

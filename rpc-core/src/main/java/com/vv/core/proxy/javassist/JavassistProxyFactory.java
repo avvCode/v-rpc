@@ -1,6 +1,6 @@
-package com.vv.core.client.proxy.javassist;
+package com.vv.core.proxy.javassist;
 
-import com.vv.core.client.proxy.ProxyFactory;
+import com.vv.core.proxy.ProxyFactory;
 
 /**
  * @author vv
