@@ -1,5 +1,6 @@
 package com.vv.core.registy;
 
+import com.vv.core.registy.zookeeper.ProviderNodeInfo;
 import lombok.Data;
 
 import java.nio.charset.StandardCharsets;
@@ -82,12 +83,5 @@ public class URL {
         providerNodeInfo.setAddress(items[4]);
         return providerNodeInfo;
     }
-
-    public static void main(String[] args) {
-        buildURLFromUrlStr("/v-rpc/com.vv.interfaces.DataService/provider/192.168.43.227:9092");
-    }
-
-
-
 
 }

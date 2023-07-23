@@ -1,4 +1,4 @@
-package com.vv.core.client;
+package com.vv.core.config;
 
 import lombok.Data;
 
@@ -12,10 +12,15 @@ public class ClientConfig {
     /**
      * 服务端端口
      */
-    private int port;
+    private String applicationName;
 
     /**
-     * 服务端地址
+     * 注册服务地址
      */
-    private String serverAddr;
+    private String registerAddr;
+
+    /**
+     * 代理实现方式
+     */
+    private String proxyType;
 }

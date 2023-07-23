@@ -1,7 +1,7 @@
 package com.vv.core.proxy.jdk;
 
 import com.vv.core.common.RpcInvocation;
-import com.vv.core.common.ClientCache;
+import com.vv.core.common.cache.ClientCache;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

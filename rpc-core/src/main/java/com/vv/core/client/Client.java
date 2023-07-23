@@ -1,22 +1,35 @@
 package com.vv.core.client;
 
 import com.alibaba.fastjson.JSON;
+import com.vv.core.common.event.VRpcListenerLoader;
+import com.vv.core.common.utils.CommonUtils;
+import com.vv.core.config.ClientConfig;
+import com.vv.core.config.PropertiesBootstrap;
 import com.vv.core.proxy.javassist.JavassistProxyFactory;
 import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.RpcProtocol;
-import com.vv.core.common.ClientCache;
+import com.vv.core.common.cache.ClientCache;
+import com.vv.core.proxy.jdk.JDKProxyFactory;
+import com.vv.core.registy.URL;
+import com.vv.core.registy.zookeeper.AbstractRegister;
+import com.vv.core.registy.zookeeper.ZookeeperRegister;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.Data;
 import com.vv.interfaces.DataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+
+import static com.vv.core.common.cache.ClientCache.SUBSCRIBE_SERVICE_LIST;
 
 
 /**
@@ -28,74 +41,131 @@ import org.slf4j.LoggerFactory;
 public class Client {
     private Logger logger = LoggerFactory.getLogger(Client.class);
 
+    public static EventLoopGroup clientGroup = new NioEventLoopGroup();
+
     private ClientConfig clientConfig;
 
-    public static void main(String[] args) throws Throwable {
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.setPort(8080);
-        clientConfig.setServerAddr("localhost");
-        Client client = new Client();
-        client.setClientConfig(clientConfig);
-        Reference reference = client.startApplication();
-        //获取代理对象
-        DataService dataService = reference.get(DataService.class);
+    private AbstractRegister abstractRegister;
 
-        String result = dataService.sendData("test");
+    private VRpcListenerLoader vRpcListenerLoader;
 
-        System.out.println(result);
-    }
-    public Reference startApplication() throws InterruptedException {
-        logger.info("==== 客户端启动中 ====");
-        ChannelFuture channelFuture = new Bootstrap()
-                .group(new NioEventLoopGroup())
-                .channel(NioSocketChannel.class)
-                .handler(new ChannelInitializer<Channel>() {
-                    @Override
-                    protected void initChannel(Channel ch) {
-                        ch.pipeline()
-                                .addLast(new RpcEncoder())
-                                .addLast(new RpcDecoder())
-                                .addLast(new ClientHandler());
-                    }
-                })
-                .connect(clientConfig.getServerAddr(), clientConfig.getPort())
-                .sync();
-        logger.info("==== 客户端启动成功 ====");
-        this.startSendThread(channelFuture);
-        Reference reference = new Reference(new JavassistProxyFactory());
-        return reference;
+    private Bootstrap bootstrap = new Bootstrap();
+
+
+    public RpcReference initClientApplication() {
+        EventLoopGroup clientGroup = new NioEventLoopGroup();
+        bootstrap.group(clientGroup);
+        bootstrap.channel(NioSocketChannel.class);
+        bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline().addLast(new RpcEncoder());
+                ch.pipeline().addLast(new RpcDecoder());
+                ch.pipeline().addLast(new ClientHandler());
+            }
+        });
+        vRpcListenerLoader = new VRpcListenerLoader();
+        vRpcListenerLoader.init();
+        this.clientConfig = PropertiesBootstrap.loadClientConfigFromLocal();
+        RpcReference rpcReference;
+        if ("javassist".equals(clientConfig.getProxyType())) {
+            rpcReference = new RpcReference(new JavassistProxyFactory());
+        } else {
+            rpcReference = new RpcReference(new JDKProxyFactory());
+        }
+        return rpcReference;
     }
 
     /**
-     * 开启发送线程
+     * 启动服务之前需要预先订阅对应的dubbo服务
+     *
+     * @param serviceBean
      */
-    public void startSendThread(ChannelFuture channelFuture){
-        AsyncSendJob asyncSendJob = new AsyncSendJob(channelFuture);
-        Thread sendThread = new Thread(asyncSendJob);
-        sendThread.start();
+    public void doSubscribeService(Class serviceBean) {
+        if (abstractRegister == null) {
+            abstractRegister = new ZookeeperRegister(clientConfig.getRegisterAddr());
+        }
+        URL url = new URL();
+        url.setApplicationName(clientConfig.getApplicationName());
+        url.setServiceName(serviceBean.getName());
+        url.addParameter("host", CommonUtils.getIpAddress());
+        abstractRegister.subscribe(url);
     }
-    class AsyncSendJob implements Runnable{
-        private ChannelFuture channelFuture;
 
-        public AsyncSendJob(ChannelFuture channelFuture) {
-            this.channelFuture = channelFuture;
+    /**
+     * 开始和各个provider建立连接
+     */
+    public void doConnectServer() {
+        for (String providerServiceName : SUBSCRIBE_SERVICE_LIST) {
+            List<String> providerIps = abstractRegister.getProviderIps(providerServiceName);
+            for (String providerIp : providerIps) {
+                try {
+                    ConnectionHandler.connect(providerServiceName, providerIp);
+                } catch (InterruptedException e) {
+                    logger.error("[doConnectServer] connect fail ", e);
+                }
+            }
+            URL url = new URL();
+            url.setServiceName(providerServiceName);
+            abstractRegister.doAfterSubscribe(url);
+        }
+    }
+
+
+    /**
+     * 开启发送线程
+     *
+     * @param
+     */
+    public void startClient() {
+        Thread asyncSendJob = new Thread(new AsyncSendJob());
+        asyncSendJob.start();
+    }
+
+    class AsyncSendJob implements Runnable {
+
+        public AsyncSendJob() {
         }
 
         @Override
         public void run() {
-            logger.info("==== 启动发送线程 ====");
-            logger.info("任务发送模式：阻塞获取...");
-            while (true){
+            while (true) {
                 try {
-                    //阻塞拿任务
-                    RpcInvocation task = ClientCache.SEND_QUEUE.take();
-                    logger.info("拿到任务：{}",task);
-                    String jsonString = JSON.toJSONString(task);
-                    RpcProtocol rpcProtocol = new RpcProtocol(jsonString.getBytes());
+                    //阻塞模式
+                    RpcInvocation data = ClientCache.SEND_QUEUE.take();
+                    String json = JSON.toJSONString(data);
+                    RpcProtocol rpcProtocol = new RpcProtocol(json.getBytes());
+                    ChannelFuture channelFuture = ConnectionHandler.getChannelFuture(data.getTargetServiceName());
                     channelFuture.channel().writeAndFlush(rpcProtocol);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+            }
+        }
+    }
+
+
+    public static void main(String[] args) throws Throwable {
+        Client client = new Client();
+
+        RpcReference rpcReference = client.initClientApplication();
+
+        DataService dataService = rpcReference.get(DataService.class);
+
+
+        client.doSubscribeService(DataService.class);
+
+        ConnectionHandler.setBootstrap(client.getBootstrap());
+        client.doConnectServer();
+        client.startClient();
+
+        for (int i = 0; i < 100; i++) {
+            try {
+                String result = dataService.sendData("test");
+                System.out.println(result);
+                Thread.sleep(1000);
+            }catch (Exception e){
+                e.printStackTrace();
             }
         }
     }

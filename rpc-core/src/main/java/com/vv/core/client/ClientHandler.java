@@ -10,7 +10,7 @@ import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.vv.core.common.ClientCache.RESP_MAP;
+import static com.vv.core.common.cache.ClientCache.RESP_MAP;
 
 
 /**

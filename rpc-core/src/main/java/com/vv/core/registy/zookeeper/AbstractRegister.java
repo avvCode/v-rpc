@@ -5,7 +5,7 @@ import com.vv.core.common.cache.ServerCache;
 import com.vv.core.registy.RegistryService;
 import com.vv.core.registy.URL;
 import java.util.List;
-import com.vv.core.common.ClientCache;
+import com.vv.core.common.cache.ClientCache;
 
 /**
  * 抽象类，给子类可扩展

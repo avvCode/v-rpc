@@ -9,8 +9,8 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
-import static com.vv.core.common.ClientCache.RESP_MAP;
-import static com.vv.core.common.ClientCache.SEND_QUEUE;
+import static com.vv.core.common.cache.ClientCache.RESP_MAP;
+import static com.vv.core.common.cache.ClientCache.SEND_QUEUE;
 
 /**
  * @author vv

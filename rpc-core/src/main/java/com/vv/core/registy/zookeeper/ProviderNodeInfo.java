@@ -1,4 +1,4 @@
-package com.vv.core.registy;
+package com.vv.core.registy.zookeeper;
 
 import lombok.Data;
 

@@ -7,10 +7,10 @@ import com.vv.core.proxy.ProxyFactory;
  * @Description 封装多一层代理
  * @date 2023/7/21-15:04
  */
-public class Reference {
+public class RpcReference {
     private ProxyFactory proxyFactory;
 
-    public Reference(ProxyFactory proxyFactory) {
+    public RpcReference(ProxyFactory proxyFactory) {
         this.proxyFactory = proxyFactory;
     }
     /**

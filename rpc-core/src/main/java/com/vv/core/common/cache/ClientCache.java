@@ -1,8 +1,8 @@
-package com.vv.core.common;
+package com.vv.core.common.cache;
 
-import com.vv.core.client.ClientConfig;
 import com.vv.core.common.ChannelFutureWrapper;
 import com.vv.core.common.RpcInvocation;
+import com.vv.core.config.ClientConfig;
 import com.vv.core.registy.URL;
 
 import java.util.*;
