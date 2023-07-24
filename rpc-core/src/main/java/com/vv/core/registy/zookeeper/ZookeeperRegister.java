@@ -1,7 +1,9 @@
 package com.vv.core.registy.zookeeper;
 
+import com.alibaba.fastjson.JSON;
 import com.vv.core.common.event.VRpcEvent;
 import com.vv.core.common.event.VRpcListenerLoader;
+import com.vv.core.common.event.VRpcNodeChangeEvent;
 import com.vv.core.common.event.VRpcUpdateEvent;
 import com.vv.core.common.event.data.URLChangeWrapper;
 import com.vv.core.registy.RegistryService;
@@ -11,21 +13,32 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class ZookeeperRegister extends AbstractRegister implements RegistryService {
 
+
     private AbstractZookeeperClient zkClient;
 
     private String ROOT = "/v-rpc";
+
+    public AbstractZookeeperClient getZkClient() {
+        return zkClient;
+    }
+
+    public void setZkClient(AbstractZookeeperClient zkClient) {
+        this.zkClient = zkClient;
+    }
 
     private String getProviderPath(URL url) {
         return ROOT + "/" + url.getServiceName() + "/provider/" + url.getParameters().get("host") + ":" + url.getParameters().get("port");
     }
 
     private String getConsumerPath(URL url) {
-        return ROOT + "/" + url.getServiceName() + "/consumer/" + url.getApplicationName() + ":" + url.getParameters().get("host")+":";
+        return ROOT + "/" + url.getServiceName() + "/consumer/" + url.getApplicationName() + ":" + url.getParameters().get("host") + ":";
     }
 
     public ZookeeperRegister(String address) {
@@ -39,6 +52,16 @@ public class ZookeeperRegister extends AbstractRegister implements RegistryServi
         return nodeDataList;
     }
 
+    @Override
+    public Map<String, String> getServiceWeightMap(String serviceName) {
+        List<String> nodeDataList = this.zkClient.getChildrenData(ROOT + "/" + serviceName + "/provider");
+        Map<String, String> result = new HashMap<>();
+        for (String ipAndHost : nodeDataList) {
+            String childData = this.zkClient.getNodeData(ROOT + "/" + serviceName + "/provider/" + ipAndHost);
+            result.put(ipAndHost, childData);
+        }
+        return result;
+    }
 
     @Override
     public void register(URL url) {
@@ -79,22 +102,48 @@ public class ZookeeperRegister extends AbstractRegister implements RegistryServi
     @Override
     public void doAfterSubscribe(URL url) {
         //监听是否有新的服务注册
-        String newServerNodePath = ROOT + "/" + url.getServiceName() + "/provider";
+        String servicePath = url.getParameters().get("servicePath");
+        String newServerNodePath = ROOT + "/" + servicePath;
         watchChildNodeData(newServerNodePath);
+        String providerIpStrJson = url.getParameters().get("providerIps");
+        List<String> providerIpList = JSON.parseObject(providerIpStrJson, List.class);
+        for (String providerIp : providerIpList) {
+            this.watchNodeDataChange(ROOT + "/" + servicePath + "/" + providerIp);
+        }
     }
 
-    public void watchChildNodeData(String newServerNodePath){
+    /**
+     * 订阅服务节点内部的数据变化
+     *
+     * @param newServerNodePath
+     */
+    public void watchNodeDataChange(String newServerNodePath) {
+        zkClient.watchNodeData(newServerNodePath, new Watcher() {
+
+            @Override
+            public void process(WatchedEvent watchedEvent) {
+                String path = watchedEvent.getPath();
+                String nodeData = zkClient.getNodeData(path);
+                nodeData = nodeData.replace(";","/");
+                ProviderNodeInfo providerNodeInfo = URL.buildURLFromUrlStr(nodeData);
+                VRpcEvent iRpcEvent = new VRpcNodeChangeEvent(providerNodeInfo);
+                VRpcListenerLoader.sendEvent(iRpcEvent);
+                watchNodeDataChange(newServerNodePath);
+            }
+        });
+    }
+
+    public void watchChildNodeData(String newServerNodePath) {
         zkClient.watchChildNodeData(newServerNodePath, new Watcher() {
             @Override
             public void process(WatchedEvent watchedEvent) {
-                System.out.println(watchedEvent);
                 String path = watchedEvent.getPath();
                 List<String> childrenDataList = zkClient.getChildrenData(path);
                 URLChangeWrapper urlChangeWrapper = new URLChangeWrapper();
                 urlChangeWrapper.setProviderUrl(childrenDataList);
                 urlChangeWrapper.setServiceName(path.split("/")[2]);
-                VRpcEvent vRpcEvent = new VRpcUpdateEvent(urlChangeWrapper);
-                VRpcListenerLoader.sendEvent(vRpcEvent);
+                VRpcEvent iRpcEvent = new VRpcUpdateEvent(urlChangeWrapper);
+                VRpcListenerLoader.sendEvent(iRpcEvent);
                 //收到回调之后在注册一次监听，这样能保证一直都收到消息
                 watchChildNodeData(path);
             }
@@ -106,11 +155,12 @@ public class ZookeeperRegister extends AbstractRegister implements RegistryServi
 
     }
 
-
     @Override
     public void doUnSubscribe(URL url) {
         this.zkClient.deleteNode(getConsumerPath(url));
         super.doUnSubscribe(url);
     }
+
+
 
 }

@@ -23,4 +23,9 @@ public class ClientConfig {
      * 代理实现方式
      */
     private String proxyType;
+
+    /**
+     * 负载均衡策略 example:random,rotate
+     */
+    private String routerStrategy;
 }

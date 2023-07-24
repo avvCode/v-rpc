@@ -3,6 +3,7 @@ package com.vv.core.server;
 import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
 import com.vv.core.common.cache.ServerCache;
+import com.vv.core.common.event.VRpcListenerLoader;
 import com.vv.core.common.utils.CommonUtils;
 import com.vv.core.config.PropertiesBootstrap;
 import com.vv.core.config.ServerConfig;
@@ -21,8 +22,7 @@ import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.vv.core.common.cache.ServerCache.PROVIDER_CLASS_MAP;
-import static com.vv.core.common.cache.ServerCache.PROVIDER_URL_SET;
+import static com.vv.core.common.cache.ServerCache.*;
 
 /**
  * @author vv
@@ -31,7 +31,6 @@ import static com.vv.core.common.cache.ServerCache.PROVIDER_URL_SET;
  */
 @Data
 public class Server {
-    private Logger logger = LoggerFactory.getLogger(Server.class);
 
     private static EventLoopGroup bossGroup = null;
 
@@ -39,8 +38,16 @@ public class Server {
 
     private ServerConfig serverConfig;
 
-    private RegistryService registryService;
+    private static VRpcListenerLoader vRpcListenerLoader;
 
+
+    public ServerConfig getServerConfig() {
+        return serverConfig;
+    }
+
+    public void setServerConfig(ServerConfig serverConfig) {
+        this.serverConfig = serverConfig;
+    }
 
     public void startApplication() throws InterruptedException {
         bossGroup = new NioEventLoopGroup();
@@ -85,8 +92,8 @@ public class Server {
         if (classes.length > 1) {
             throw new RuntimeException("service must only had one interfaces!");
         }
-        if (registryService == null) {
-            registryService = new ZookeeperRegister(serverConfig.getRegisterAddr());
+        if (REGISTRY_SERVICE == null) {
+            REGISTRY_SERVICE = new ZookeeperRegister(serverConfig.getRegisterAddr());
         }
         //默认选择该对象的第一个实现接口
         Class interfaceClass = classes[0];
@@ -109,7 +116,7 @@ public class Server {
                     e.printStackTrace();
                 }
                 for (URL url : PROVIDER_URL_SET) {
-                    registryService.register(url);
+                    REGISTRY_SERVICE.register(url);
                 }
             }
         });
@@ -120,7 +127,11 @@ public class Server {
     public static void main(String[] args) throws InterruptedException {
         Server server = new Server();
         server.initServerConfig();
+        vRpcListenerLoader = new VRpcListenerLoader();
+        vRpcListenerLoader.init();
         server.exportService(new DataServiceImpl());
+        server.exportService(new UserServiceImpl());
+        ApplicationShutdownHook.registryShutdownHook();
         server.startApplication();
     }
 }

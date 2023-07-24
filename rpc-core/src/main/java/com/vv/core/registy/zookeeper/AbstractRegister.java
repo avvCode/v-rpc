@@ -1,11 +1,13 @@
 package com.vv.core.registy.zookeeper;
 
 
-import com.vv.core.common.cache.ServerCache;
 import com.vv.core.registy.RegistryService;
 import com.vv.core.registy.URL;
 import java.util.List;
-import com.vv.core.common.cache.ClientCache;
+import java.util.Map;
+
+import static com.vv.core.common.cache.ClientCache.SUBSCRIBE_SERVICE_LIST;
+import static com.vv.core.common.cache.ServerCache.PROVIDER_URL_SET;
 
 /**
  * 抽象类，给子类可扩展
@@ -15,17 +17,17 @@ public abstract class AbstractRegister implements RegistryService {
 
     @Override
     public void register(URL url) {
-        ServerCache.PROVIDER_URL_SET.add(url);
+        PROVIDER_URL_SET.add(url);
     }
 
     @Override
     public void unRegister(URL url) {
-        ServerCache.PROVIDER_URL_SET.remove(url);
+        PROVIDER_URL_SET.remove(url);
     }
 
     @Override
     public void subscribe(URL url) {
-       ClientCache.SUBSCRIBE_SERVICE_LIST.add(url.getServiceName());
+        SUBSCRIBE_SERVICE_LIST.add(url);
     }
 
     /**
@@ -50,9 +52,16 @@ public abstract class AbstractRegister implements RegistryService {
      */
     public abstract List<String> getProviderIps(String serviceName);
 
+    /**
+     * 获取服务的权重信息
+     *
+     * @param serviceName
+     * @return <ip:port --> urlString>,<ip:port --> urlString>,<ip:port --> urlString>,<ip:port --> urlString>
+     */
+    public abstract Map<String, String> getServiceWeightMap(String serviceName);
 
     @Override
     public void doUnSubscribe(URL url) {
-        ClientCache.SUBSCRIBE_SERVICE_LIST.remove(url.getServiceName());
+        SUBSCRIBE_SERVICE_LIST.remove(url.getServiceName());
     }
 }

@@ -16,6 +16,8 @@ public class PropertiesBootstrap {
     public static final String APPLICATION_NAME = "v-rpc.applicationName";
     public static final String PROXY_TYPE = "v-rpc.proxyType";
 
+    public static final String ROUTER_TYPE = "v-rpc.router";
+
     public static ServerConfig loadServerConfigFromLocal() {
         try {
             PropertiesLoader.loadConfiguration();
@@ -39,8 +41,8 @@ public class PropertiesBootstrap {
         clientConfig.setApplicationName(PropertiesLoader.getPropertiesStr(APPLICATION_NAME));
         clientConfig.setRegisterAddr(PropertiesLoader.getPropertiesStr(REGISTER_ADDRESS));
         clientConfig.setProxyType(PropertiesLoader.getPropertiesStr(PROXY_TYPE));
+        clientConfig.setRouterStrategy(PropertiesLoader.getPropertiesStr(ROUTER_TYPE));
         return clientConfig;
     }
-
 
 }

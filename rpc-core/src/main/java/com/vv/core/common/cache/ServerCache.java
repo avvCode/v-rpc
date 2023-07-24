@@ -1,5 +1,6 @@
 package com.vv.core.common.cache;
 
+import com.vv.core.registy.RegistryService;
 import com.vv.core.registy.URL;
 
 import java.util.HashMap;
@@ -21,4 +22,6 @@ public class ServerCache {
      * 服务提供的URL
      */
     public static final Set<URL> PROVIDER_URL_SET = new HashSet<>();
+
+    public static RegistryService REGISTRY_SERVICE;
 }

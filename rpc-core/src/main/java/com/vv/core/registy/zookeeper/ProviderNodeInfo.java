@@ -12,4 +12,8 @@ public class ProviderNodeInfo {
     private String serviceName;
 
     private String address;
+
+    private Integer weight;
+
+    private String registryTime;
 }

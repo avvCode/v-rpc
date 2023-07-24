@@ -10,11 +10,12 @@ import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.RpcProtocol;
-import com.vv.core.common.cache.ClientCache;
 import com.vv.core.proxy.jdk.JDKProxyFactory;
 import com.vv.core.registy.URL;
 import com.vv.core.registy.zookeeper.AbstractRegister;
 import com.vv.core.registy.zookeeper.ZookeeperRegister;
+import com.vv.core.router.impl.RandomRouterImpl;
+import com.vv.core.router.impl.RotateRouterImpl;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -28,8 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
-import static com.vv.core.common.cache.ClientCache.SUBSCRIBE_SERVICE_LIST;
+import static com.vv.core.common.cache.ClientCache.*;
+import static com.vv.core.common.constant.RpcConstant.*;
 
 
 /**
@@ -51,6 +54,10 @@ public class Client {
 
     private Bootstrap bootstrap = new Bootstrap();
 
+    public Bootstrap getBootstrap() {
+        return bootstrap;
+    }
+
 
     public RpcReference initClientApplication() {
         EventLoopGroup clientGroup = new NioEventLoopGroup();
@@ -68,7 +75,7 @@ public class Client {
         vRpcListenerLoader.init();
         this.clientConfig = PropertiesBootstrap.loadClientConfigFromLocal();
         RpcReference rpcReference;
-        if ("javassist".equals(clientConfig.getProxyType())) {
+        if (JAVASSIST_PROXY_TYPE.equals(clientConfig.getProxyType())) {
             rpcReference = new RpcReference(new JavassistProxyFactory());
         } else {
             rpcReference = new RpcReference(new JDKProxyFactory());
@@ -89,6 +96,8 @@ public class Client {
         url.setApplicationName(clientConfig.getApplicationName());
         url.setServiceName(serviceBean.getName());
         url.addParameter("host", CommonUtils.getIpAddress());
+        Map<String, String> result = abstractRegister.getServiceWeightMap(serviceBean.getName());
+        URL_MAP.put(serviceBean.getName(),result);
         abstractRegister.subscribe(url);
     }
 
@@ -96,17 +105,18 @@ public class Client {
      * 开始和各个provider建立连接
      */
     public void doConnectServer() {
-        for (String providerServiceName : SUBSCRIBE_SERVICE_LIST) {
-            List<String> providerIps = abstractRegister.getProviderIps(providerServiceName);
+        for (URL providerURL : SUBSCRIBE_SERVICE_LIST) {
+            List<String> providerIps = abstractRegister.getProviderIps(providerURL.getServiceName());
             for (String providerIp : providerIps) {
                 try {
-                    ConnectionHandler.connect(providerServiceName, providerIp);
+                    ConnectionHandler.connect(providerURL.getServiceName(), providerIp);
                 } catch (InterruptedException e) {
                     logger.error("[doConnectServer] connect fail ", e);
                 }
             }
             URL url = new URL();
-            url.setServiceName(providerServiceName);
+            url.addParameter("servicePath",providerURL.getServiceName()+"/provider");
+            url.addParameter("providerIps", JSON.toJSONString(providerIps));
             abstractRegister.doAfterSubscribe(url);
         }
     }
@@ -132,7 +142,7 @@ public class Client {
             while (true) {
                 try {
                     //阻塞模式
-                    RpcInvocation data = ClientCache.SEND_QUEUE.take();
+                    RpcInvocation data = SEND_QUEUE.take();
                     String json = JSON.toJSONString(data);
                     RpcProtocol rpcProtocol = new RpcProtocol(json.getBytes());
                     ChannelFuture channelFuture = ConnectionHandler.getChannelFuture(data.getTargetServiceName());
@@ -144,27 +154,36 @@ public class Client {
         }
     }
 
+    /**
+     * todo
+     * 后续可以考虑加入spi
+     */
+    private void initClientConfig() {
+        //初始化路由策略
+        String routerStrategy = clientConfig.getRouterStrategy();
+        if (RANDOM_ROUTER_TYPE.equals(routerStrategy)) {
+            IROUTER = new RandomRouterImpl();
+        } else if (ROTATE_ROUTER_TYPE.equals(routerStrategy)) {
+            IROUTER = new RotateRouterImpl();
+        }
+    }
+
 
     public static void main(String[] args) throws Throwable {
         Client client = new Client();
-
         RpcReference rpcReference = client.initClientApplication();
-
+        client.initClientConfig();
         DataService dataService = rpcReference.get(DataService.class);
-
-
         client.doSubscribeService(DataService.class);
-
         ConnectionHandler.setBootstrap(client.getBootstrap());
         client.doConnectServer();
         client.startClient();
-
         for (int i = 0; i < 100; i++) {
             try {
                 String result = dataService.sendData("test");
                 System.out.println(result);
                 Thread.sleep(1000);
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
