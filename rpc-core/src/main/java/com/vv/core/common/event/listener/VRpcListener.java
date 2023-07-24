@@ -1,4 +1,4 @@
-package com.vv.core.common.event;
+package com.vv.core.common.event.listener;
 
 /**
  * @author vv

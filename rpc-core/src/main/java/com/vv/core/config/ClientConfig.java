@@ -28,4 +28,9 @@ public class ClientConfig {
      * 负载均衡策略 example:random,rotate
      */
     private String routerStrategy;
+
+    /**
+     * 客户端序列化方式 example: hession2,kryo,jdk,fastjson
+     */
+    private String clientSerialize;
 }

@@ -6,6 +6,7 @@ import com.vv.core.common.RpcInvocation;
 import com.vv.core.config.ClientConfig;
 import com.vv.core.registy.URL;
 import com.vv.core.router.IRouter;
+import com.vv.core.serialize.SerializeFactory;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -31,5 +32,7 @@ public class ClientCache {
     public static Map<String, ChannelFutureWrapper[]> SERVICE_ROUTER_MAP = new ConcurrentHashMap<>();
     public static ChannelFuturePollingRef CHANNEL_FUTURE_POLLING_REF = new ChannelFuturePollingRef();
     public static IRouter IROUTER;
+
+    public static SerializeFactory CLIENT_SERIALIZE_FACTORY;
 
 }

@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import static com.vv.core.common.cache.ServerCache.SERVER_SERIALIZE_FACTORY;
+
 /**
  * @author vv
  * @Description 服务端接收到请求后的处理方式
@@ -25,8 +27,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         System.out.println(msg);
         RpcProtocol protocol = (RpcProtocol) msg;
         byte[] content = protocol.getContent();
-        String json = new String(content,0,protocol.getContentLength()); //RpcInvocationJSON对象
-        RpcInvocation rpcInvocation = JSON.parseObject(json, RpcInvocation.class);
+        RpcInvocation rpcInvocation = SERVER_SERIALIZE_FACTORY.deserialize(content, RpcInvocation.class);
         logger.info("收到客户端消息：{}",rpcInvocation);
         //请求的类名
         String serviceName = rpcInvocation.getTargetServiceName();

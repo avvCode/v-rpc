@@ -10,6 +10,7 @@ import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.vv.core.common.cache.ClientCache.CLIENT_SERIALIZE_FACTORY;
 import static com.vv.core.common.cache.ClientCache.RESP_MAP;
 
 
@@ -23,8 +24,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         RpcProtocol protocol = (RpcProtocol) msg;
-        String json = new String(protocol.getContent(),0, protocol.getContentLength());
-        RpcInvocation rpcInvocation = JSON.parseObject(json, RpcInvocation.class);
+        RpcInvocation rpcInvocation = CLIENT_SERIALIZE_FACTORY.deserialize(protocol.getContent(), RpcInvocation.class);
         logger.info("收到服务端响应：{}",rpcInvocation);
         if(!RESP_MAP.containsKey(rpcInvocation.getUuid())){
             throw new IllegalArgumentException("server response is error!");

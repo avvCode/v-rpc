@@ -1,6 +1,7 @@
-package com.vv.core.common.event;
+package com.vv.core.common.event.listener;
 
 import com.vv.core.common.ChannelFutureWrapper;
+import com.vv.core.common.event.VRpcNodeChangeEvent;
 import com.vv.core.registy.URL;
 import com.vv.core.registy.zookeeper.ProviderNodeInfo;
 
@@ -14,7 +15,7 @@ import static com.vv.core.common.cache.ClientCache.IROUTER;
  * @Description TODO
  * @date 2023/7/24-15:44
  */
-public class ProviderNodeDataChangeListener implements VRpcListener<VRpcNodeChangeEvent>{
+public class ProviderNodeDataChangeListener implements VRpcListener<VRpcNodeChangeEvent> {
     @Override
     public void callBack(Object t) {
         ProviderNodeInfo providerNodeInfo = ((ProviderNodeInfo) t);

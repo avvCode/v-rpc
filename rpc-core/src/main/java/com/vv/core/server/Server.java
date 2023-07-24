@@ -2,14 +2,16 @@ package com.vv.core.server;
 
 import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
-import com.vv.core.common.cache.ServerCache;
 import com.vv.core.common.event.VRpcListenerLoader;
 import com.vv.core.common.utils.CommonUtils;
 import com.vv.core.config.PropertiesBootstrap;
 import com.vv.core.config.ServerConfig;
-import com.vv.core.registy.RegistryService;
 import com.vv.core.registy.URL;
 import com.vv.core.registy.zookeeper.ZookeeperRegister;
+import com.vv.core.serialize.fastjson.FastJsonSerializeFactory;
+import com.vv.core.serialize.hessian.HessianSerializeFactory;
+import com.vv.core.serialize.jdk.JdkSerializeFactory;
+import com.vv.core.serialize.kryo.KryoSerializeFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -17,12 +19,10 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.vv.core.common.cache.ServerCache.*;
+import static com.vv.core.common.constant.RpcConstant.*;
 
 /**
  * @author vv
@@ -40,14 +40,6 @@ public class Server {
 
     private static VRpcListenerLoader vRpcListenerLoader;
 
-
-    public ServerConfig getServerConfig() {
-        return serverConfig;
-    }
-
-    public void setServerConfig(ServerConfig serverConfig) {
-        this.serverConfig = serverConfig;
-    }
 
     public void startApplication() throws InterruptedException {
         bossGroup = new NioEventLoopGroup();
@@ -77,6 +69,24 @@ public class Server {
     public void initServerConfig() {
         ServerConfig serverConfig = PropertiesBootstrap.loadServerConfigFromLocal();
         this.setServerConfig(serverConfig);
+        String serverSerialize = serverConfig.getServerSerialize();
+        switch (serverSerialize) {
+            case JDK_SERIALIZE_TYPE:
+                SERVER_SERIALIZE_FACTORY = new JdkSerializeFactory();
+                break;
+            case FAST_JSON_SERIALIZE_TYPE:
+                SERVER_SERIALIZE_FACTORY = new FastJsonSerializeFactory();
+                break;
+            case HESSIAN2_SERIALIZE_TYPE:
+                SERVER_SERIALIZE_FACTORY = new HessianSerializeFactory();
+                break;
+            case KRYO_SERIALIZE_TYPE:
+                SERVER_SERIALIZE_FACTORY = new KryoSerializeFactory();
+                break;
+            default:
+                throw new RuntimeException("no match serialize type for" + serverSerialize);
+        }
+        System.out.println("serverSerialize is "+serverSerialize);
     }
 
     /**

@@ -2,7 +2,6 @@ package com.vv.core.common.event.listener;
 
 import com.vv.core.client.ConnectionHandler;
 import com.vv.core.common.ChannelFutureWrapper;
-import com.vv.core.common.event.VRpcListener;
 import com.vv.core.common.event.VRpcUpdateEvent;
 import com.vv.core.common.event.data.URLChangeWrapper;
 import com.vv.core.common.utils.CommonUtils;
