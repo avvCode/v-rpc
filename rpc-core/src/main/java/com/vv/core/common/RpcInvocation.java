@@ -2,13 +2,15 @@ package com.vv.core.common;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @author vv
  * @Description 实际需要传输的类
  * @date 2023/7/20-18:58
  */
 @Data
-public class RpcInvocation {
+public class RpcInvocation implements Serializable {
     //请求的目标方法，例如findUser
     private String targetMethod;
     //请求的目标服务名称，例如：com.vv.user.UserService

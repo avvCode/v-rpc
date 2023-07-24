@@ -56,7 +56,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         }
         //封装需要返回客户端的信息
         rpcInvocation.setResponse(result);
-        RpcProtocol rpcProtocol = new RpcProtocol(JSON.toJSONString(rpcInvocation).getBytes());
+        RpcProtocol rpcProtocol = new RpcProtocol(SERVER_SERIALIZE_FACTORY.serialize(rpcInvocation));
         ctx.writeAndFlush(rpcProtocol);
     }
 
