@@ -1,5 +1,6 @@
 package com.vv.core.common.event;
 
+import com.vv.core.common.event.listener.ServiceDestroyListener;
 import com.vv.core.common.event.listener.ServiceUpdateListener;
 import com.vv.core.common.utils.CommonUtils;
 
@@ -16,25 +17,24 @@ import java.util.concurrent.Executors;
  * @date 2023/7/23-16:07
  */
 public class VRpcListenerLoader {
-    /**
-     * 需要通知的服务列表
-     */
-    private static List<VRpcListener> VRpcListenerList = new ArrayList<>();
+    private static List<VRpcListener> vRpcListenerList = new ArrayList<>();
 
     private static ExecutorService eventThreadPool = Executors.newFixedThreadPool(2);
 
-    public static void registerListener(VRpcListener vRpcListener) {
-        VRpcListenerList.add(vRpcListener);
+    public static void registerListener(VRpcListener iRpcListener) {
+        vRpcListenerList.add(iRpcListener);
     }
 
     public void init() {
         registerListener(new ServiceUpdateListener());
+        registerListener(new ServiceDestroyListener());
+        registerListener(new ProviderNodeDataChangeListener());
     }
 
     /**
      * 获取接口上的泛型T
      *
-     * @param o     接口
+     * @param o 接口
      */
     public static Class<?> getInterfaceT(Object o) {
         Type[] types = o.getClass().getGenericInterfaces();
@@ -46,18 +46,43 @@ public class VRpcListenerLoader {
         return null;
     }
 
-    public static void sendEvent(VRpcEvent vRpcEvent) {
-        if(CommonUtils.isEmptyList(VRpcListenerList)){
+    /**
+     * 同步事件处理，可能会堵塞
+     *
+     * @param iRpcEvent
+     */
+    public static void sendSyncEvent(VRpcEvent iRpcEvent) {
+        System.out.println(vRpcListenerList);
+        if (CommonUtils.isEmptyList(vRpcListenerList)) {
             return;
         }
-        for (VRpcListener<?> vRpcListener : VRpcListenerList) {
+        for (VRpcListener<?> vRpcListener : vRpcListenerList) {
             Class<?> type = getInterfaceT(vRpcListener);
-            if(type.equals(vRpcEvent.getClass())){
-                eventThreadPool.execute(() -> {
-                    try {
-                        vRpcListener.callBack(vRpcEvent.getData());
-                    }catch (Exception e){
-                        e.printStackTrace();
+            if (type.equals(iRpcEvent.getClass())) {
+                try {
+                    vRpcListener.callBack(iRpcEvent.getData());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static void sendEvent(VRpcEvent iRpcEvent) {
+        if (CommonUtils.isEmptyList(vRpcListenerList)) {
+            return;
+        }
+        for (VRpcListener<?> vRpcListener : vRpcListenerList) {
+            Class<?> type = getInterfaceT(vRpcListener);
+            if (type.equals(iRpcEvent.getClass())) {
+                eventThreadPool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            vRpcListener.callBack(iRpcEvent.getData());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
             }
