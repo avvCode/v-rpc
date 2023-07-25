@@ -4,6 +4,7 @@ import com.vv.core.common.ChannelFuturePollingRef;
 import com.vv.core.common.ChannelFutureWrapper;
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.config.ClientConfig;
+import com.vv.core.filter.client.ClientFilterChain;
 import com.vv.core.registy.URL;
 import com.vv.core.router.IRouter;
 import com.vv.core.serialize.SerializeFactory;
@@ -34,5 +35,9 @@ public class ClientCache {
     public static IRouter IROUTER;
 
     public static SerializeFactory CLIENT_SERIALIZE_FACTORY;
+
+    public static ClientConfig CLIENT_CONFIG;
+
+    public static ClientFilterChain CLIENT_FILTER_CHAIN;
 
 }

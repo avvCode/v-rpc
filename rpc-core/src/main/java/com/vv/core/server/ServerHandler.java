@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import static com.vv.core.common.cache.ServerCache.SERVER_FILTER_CHAIN;
 import static com.vv.core.common.cache.ServerCache.SERVER_SERIALIZE_FACTORY;
 
 /**
@@ -28,7 +29,9 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         RpcProtocol protocol = (RpcProtocol) msg;
         byte[] content = protocol.getContent();
         RpcInvocation rpcInvocation = SERVER_SERIALIZE_FACTORY.deserialize(content, RpcInvocation.class);
-        logger.info("收到客户端消息：{}",rpcInvocation);
+        //logger.info("收到客户端消息：{}",rpcInvocation);
+        //执行过滤链路
+        SERVER_FILTER_CHAIN.doFilter(rpcInvocation);
         //请求的类名
         String serviceName = rpcInvocation.getTargetServiceName();
         //请求的方法名

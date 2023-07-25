@@ -2,11 +2,15 @@ package com.vv.core.client;
 
 
 import com.vv.core.common.ChannelFutureWrapper;
+import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.utils.CommonUtils;
+import com.vv.core.registy.URL;
+import com.vv.core.registy.zookeeper.ProviderNodeInfo;
 import com.vv.core.router.Selector;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -44,7 +48,7 @@ public class ConnectionHandler {
             throw new RuntimeException("bootstrap can not be null");
         }
         //格式错误类型的信息
-        if(!providerIp.contains(":")){
+        if (!providerIp.contains(":")) {
             return;
         }
         String[] providerAddress = providerIp.split(":");
@@ -53,12 +57,14 @@ public class ConnectionHandler {
         //到底这个channelFuture里面是什么
         ChannelFuture channelFuture = bootstrap.connect(ip, port).sync();
         String providerURLInfo = URL_MAP.get(providerServiceName).get(providerIp);
-        System.out.println(providerURLInfo);
+        ProviderNodeInfo providerNodeInfo = URL.buildURLFromUrlStr(providerURLInfo);
+        //todo 缺少一个将url进行转换的组件
         ChannelFutureWrapper channelFutureWrapper = new ChannelFutureWrapper();
         channelFutureWrapper.setChannelFuture(channelFuture);
         channelFutureWrapper.setHost(ip);
         channelFutureWrapper.setPort(port);
-        channelFutureWrapper.setWeight(Integer.valueOf(providerURLInfo.substring(providerURLInfo.lastIndexOf(";")+1)));
+        channelFutureWrapper.setWeight(providerNodeInfo.getWeight());
+        channelFutureWrapper.setGroup(providerNodeInfo.getGroup());
         SERVER_ADDRESS.add(providerIp);
         List<ChannelFutureWrapper> channelFutureWrappers = CONNECT_MAP.get(providerServiceName);
         if (CommonUtils.isEmptyList(channelFutureWrappers)) {
@@ -107,16 +113,19 @@ public class ConnectionHandler {
     /**
      * 默认走随机策略获取ChannelFuture
      *
-     * @param providerServiceName
+     * @param rpcInvocation
      * @return
      */
-    public static ChannelFuture getChannelFuture(String providerServiceName) {
-        List<ChannelFutureWrapper> channelFutureWrappers = CONNECT_MAP.get(providerServiceName);
-        if (CommonUtils.isEmptyList(channelFutureWrappers)) {
+    public static ChannelFuture getChannelFuture(RpcInvocation rpcInvocation) {
+        String providerServiceName = rpcInvocation.getTargetServiceName();
+        ChannelFutureWrapper[] channelFutureWrappers = SERVICE_ROUTER_MAP.get(providerServiceName);
+        if (channelFutureWrappers == null || channelFutureWrappers.length == 0) {
             throw new RuntimeException("no provider exist for " + providerServiceName);
         }
+        CLIENT_FILTER_CHAIN.doFilter(Arrays.asList(channelFutureWrappers),rpcInvocation);
         Selector selector = new Selector();
         selector.setProviderServiceName(providerServiceName);
+        selector.setChannelFutureWrappers(channelFutureWrappers);
         ChannelFuture channelFuture = IROUTER.select(selector).getChannelFuture();
         return channelFuture;
     }

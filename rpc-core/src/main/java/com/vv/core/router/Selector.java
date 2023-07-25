@@ -1,5 +1,6 @@
 package com.vv.core.router;
 
+import com.vv.core.common.ChannelFutureWrapper;
 import lombok.Data;
 
 /**
@@ -10,5 +11,8 @@ import lombok.Data;
 @Data
 public class Selector {
     private String providerServiceName;
-
+    /**
+     * 经过二次筛选之后的future集合
+     */
+    private ChannelFutureWrapper[] channelFutureWrappers;
 }

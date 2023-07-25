@@ -9,6 +9,8 @@ import lombok.Data;
  */
 @Data
 public class ProviderNodeInfo {
+    private String applicationName;
+
     private String serviceName;
 
     private String address;
@@ -16,4 +18,6 @@ public class ProviderNodeInfo {
     private Integer weight;
 
     private String registryTime;
+
+    private String group;
 }

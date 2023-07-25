@@ -6,6 +6,9 @@ import com.vv.core.common.event.VRpcListenerLoader;
 import com.vv.core.common.utils.CommonUtils;
 import com.vv.core.config.PropertiesBootstrap;
 import com.vv.core.config.ServerConfig;
+import com.vv.core.filter.server.ServerFilterChain;
+import com.vv.core.filter.server.ServerLogFilterImpl;
+import com.vv.core.filter.server.ServerTokenFilterImpl;
 import com.vv.core.registy.URL;
 import com.vv.core.registy.zookeeper.ZookeeperRegister;
 import com.vv.core.serialize.fastjson.FastJsonSerializeFactory;
@@ -87,14 +90,20 @@ public class Server {
                 throw new RuntimeException("no match serialize type for" + serverSerialize);
         }
         System.out.println("serverSerialize is "+serverSerialize);
+        SERVER_CONFIG = serverConfig;
+        ServerFilterChain serverFilterChain = new ServerFilterChain();
+        serverFilterChain.addServerFilter(new ServerLogFilterImpl());
+        serverFilterChain.addServerFilter(new ServerTokenFilterImpl());
+        SERVER_FILTER_CHAIN = serverFilterChain;
     }
 
     /**
      * 暴露服务信息
      *
-     * @param serviceBean
+     * @param serviceWrapper
      */
-    public void exportService(Object serviceBean) {
+    public void exportService(ServiceWrapper serviceWrapper) {
+        Object serviceBean = serviceWrapper.getServiceObj();
         if (serviceBean.getClass().getInterfaces().length == 0) {
             throw new RuntimeException("service must had interfaces!");
         }
@@ -113,9 +122,15 @@ public class Server {
         url.setApplicationName(serverConfig.getApplicationName());
         url.addParameter("host", CommonUtils.getIpAddress());
         url.addParameter("port", String.valueOf(serverConfig.getServerPort()));
+        url.addParameter("group", String.valueOf(serviceWrapper.getGroup()));
+        url.addParameter("limit", String.valueOf(serviceWrapper.getLimit()));
         PROVIDER_URL_SET.add(url);
+        if (CommonUtils.isNotEmpty(serviceWrapper.getServiceToken())) {
+            PROVIDER_SERVICE_WRAPPER_MAP.put(interfaceClass.getName(), serviceWrapper);
+        }
     }
 
+    //延迟暴露
     public void batchExportUrl(){
         Thread task = new Thread(new Runnable() {
             @Override
@@ -139,8 +154,14 @@ public class Server {
         server.initServerConfig();
         vRpcListenerLoader = new VRpcListenerLoader();
         vRpcListenerLoader.init();
-        server.exportService(new DataServiceImpl());
-        server.exportService(new UserServiceImpl());
+        ServiceWrapper dataServiceServiceWrapper = new ServiceWrapper(new DataServiceImpl(), "dev");
+        dataServiceServiceWrapper.setServiceToken("token-a");
+        dataServiceServiceWrapper.setLimit(2);
+        ServiceWrapper userServiceServiceWrapper = new ServiceWrapper(new UserServiceImpl(), "dev");
+        userServiceServiceWrapper.setServiceToken("token-b");
+        userServiceServiceWrapper.setLimit(2);
+        server.exportService(dataServiceServiceWrapper);
+        server.exportService(userServiceServiceWrapper);
         ApplicationShutdownHook.registryShutdownHook();
         server.startApplication();
     }

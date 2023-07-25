@@ -5,6 +5,10 @@ import com.vv.core.common.event.VRpcListenerLoader;
 import com.vv.core.common.utils.CommonUtils;
 import com.vv.core.config.ClientConfig;
 import com.vv.core.config.PropertiesBootstrap;
+import com.vv.core.filter.client.ClientFilterChain;
+import com.vv.core.filter.client.ClientLogFilterImpl;
+import com.vv.core.filter.client.DirectInvokeFilterImpl;
+import com.vv.core.filter.client.GroupFilterImpl;
 import com.vv.core.proxy.javassist.JavassistProxyFactory;
 import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
@@ -78,6 +82,7 @@ public class Client {
         vRpcListenerLoader = new VRpcListenerLoader();
         vRpcListenerLoader.init();
         this.clientConfig = PropertiesBootstrap.loadClientConfigFromLocal();
+        CLIENT_CONFIG = this.clientConfig;
         RpcReference rpcReference;
         if (JAVASSIST_PROXY_TYPE.equals(clientConfig.getProxyType())) {
             rpcReference = new RpcReference(new JavassistProxyFactory());
@@ -146,10 +151,12 @@ public class Client {
             while (true) {
                 try {
                     //阻塞模式
-                    RpcInvocation data = SEND_QUEUE.take();
-                    RpcProtocol rpcProtocol = new RpcProtocol(CLIENT_SERIALIZE_FACTORY.serialize(data));
-                    ChannelFuture channelFuture = ConnectionHandler.getChannelFuture(data.getTargetServiceName());
-                    channelFuture.channel().writeAndFlush(rpcProtocol);
+                    RpcInvocation rpcInvocation = SEND_QUEUE.take();
+                    ChannelFuture channelFuture = ConnectionHandler.getChannelFuture(rpcInvocation);
+                    if (channelFuture != null) {
+                        RpcProtocol rpcProtocol = new RpcProtocol(CLIENT_SERIALIZE_FACTORY.serialize(rpcInvocation));
+                        channelFuture.channel().writeAndFlush(rpcProtocol);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -190,6 +197,11 @@ public class Client {
             default:
                 throw new RuntimeException("no match serialize type for " + clientSerialize);
         }
+        ClientFilterChain clientFilterChain = new ClientFilterChain();
+        clientFilterChain.addClientFilter(new DirectInvokeFilterImpl());
+        clientFilterChain.addClientFilter(new GroupFilterImpl());
+        clientFilterChain.addClientFilter(new ClientLogFilterImpl());
+        CLIENT_FILTER_CHAIN = clientFilterChain;
     }
 
 
@@ -197,7 +209,13 @@ public class Client {
         Client client = new Client();
         RpcReference rpcReference = client.initClientApplication();
         client.initClientConfig();
-        DataService dataService = rpcReference.get(DataService.class);
+        RpcReferenceWrapper<DataService> rpcReferenceWrapper = new RpcReferenceWrapper<>();
+        rpcReferenceWrapper.setAimClass(DataService.class);
+        rpcReferenceWrapper.setGroup("dev");
+        rpcReferenceWrapper.setServiceToken("token-a");
+//        rpcReferenceWrapper.setUrl("192.168.43.227:9093");
+        //在初始化之前必须要设置对应的上下文
+        DataService dataService = rpcReference.get(rpcReferenceWrapper);
         client.doSubscribeService(DataService.class);
         ConnectionHandler.setBootstrap(client.getBootstrap());
         client.doConnectServer();

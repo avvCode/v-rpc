@@ -1,13 +1,17 @@
 package com.vv.core.common.cache;
 
+import com.vv.core.config.ServerConfig;
+import com.vv.core.filter.server.ServerFilterChain;
 import com.vv.core.registy.RegistryService;
 import com.vv.core.registy.URL;
 import com.vv.core.serialize.SerializeFactory;
+import com.vv.core.server.ServiceWrapper;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author vv
@@ -27,4 +31,10 @@ public class ServerCache {
     public static RegistryService REGISTRY_SERVICE;
 
     public static SerializeFactory SERVER_SERIALIZE_FACTORY;
+
+    public static ServerConfig SERVER_CONFIG;
+
+    public static ServerFilterChain SERVER_FILTER_CHAIN;
+
+    public static final Map<String, ServiceWrapper> PROVIDER_SERVICE_WRAPPER_MAP = new ConcurrentHashMap<>();
 }

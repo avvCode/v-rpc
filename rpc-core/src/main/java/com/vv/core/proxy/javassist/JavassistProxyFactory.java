@@ -1,6 +1,10 @@
 package com.vv.core.proxy.javassist;
 
+import com.vv.core.client.RpcReferenceWrapper;
 import com.vv.core.proxy.ProxyFactory;
+import com.vv.core.proxy.jdk.JDKInvocationHandler;
+
+import java.lang.reflect.Proxy;
 
 /**
  * @author vv
@@ -10,8 +14,8 @@ import com.vv.core.proxy.ProxyFactory;
 public class JavassistProxyFactory implements ProxyFactory {
 
     @Override
-    public <T> T getProxy(Class clazz) throws Exception {
-        return (T) ProxyGenerator.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                clazz, new JavassistInvocationHandler(clazz));
+    public <T> T getProxy(RpcReferenceWrapper rpcReferenceWrapper) throws Throwable {
+        return (T) Proxy.newProxyInstance(rpcReferenceWrapper.getAimClass().getClassLoader(), new Class[]{rpcReferenceWrapper.getAimClass()},
+                new JavassistInvocationHandler(rpcReferenceWrapper));
     }
 }

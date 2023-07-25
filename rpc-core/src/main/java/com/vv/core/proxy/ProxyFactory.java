@@ -1,5 +1,7 @@
 package com.vv.core.proxy;
 
+import com.vv.core.client.RpcReferenceWrapper;
+
 /**
  * @author vv
  * @Description TODO
@@ -11,5 +13,5 @@ public interface ProxyFactory {
      * @return
      * @param <T>
      */
-    <T> T getProxy(final Class clazz) throws Exception;
+    <T> T getProxy(RpcReferenceWrapper rpcReferenceWrapper) throws Throwable;
 }

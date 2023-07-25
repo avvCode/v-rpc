@@ -1,5 +1,6 @@
 package com.vv.core.proxy.jdk;
 
+import com.vv.core.client.RpcReferenceWrapper;
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.cache.ClientCache;
 
@@ -23,7 +24,11 @@ public class JDKInvocationHandler implements InvocationHandler {
     public JDKInvocationHandler(Class target) {
         this.target = target;
     }
+    private RpcReferenceWrapper rpcReferenceWrapper;
 
+    public JDKInvocationHandler(RpcReferenceWrapper rpcReferenceWrapper) {
+        this.rpcReferenceWrapper = rpcReferenceWrapper;
+    }
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         RpcInvocation rpcInvocation = new RpcInvocation();

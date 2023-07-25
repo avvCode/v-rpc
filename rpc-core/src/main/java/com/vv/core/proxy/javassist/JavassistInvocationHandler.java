@@ -2,6 +2,7 @@ package com.vv.core.proxy.javassist;
 
 
 
+import com.vv.core.client.RpcReferenceWrapper;
 import com.vv.core.common.RpcInvocation;
 
 import java.lang.reflect.InvocationHandler;
@@ -22,6 +23,11 @@ public class JavassistInvocationHandler implements InvocationHandler {
 
 
     private final static Object OBJECT = new Object();
+    private RpcReferenceWrapper rpcReferenceWrapper;
+
+    public JavassistInvocationHandler(RpcReferenceWrapper rpcReferenceWrapper) {
+        this.rpcReferenceWrapper = rpcReferenceWrapper;
+    }
 
     private Class<?> clazz;
 
@@ -34,7 +40,8 @@ public class JavassistInvocationHandler implements InvocationHandler {
         RpcInvocation rpcInvocation = new RpcInvocation();
         rpcInvocation.setArgs(args);
         rpcInvocation.setTargetMethod(method.getName());
-        rpcInvocation.setTargetServiceName(clazz.getName());
+        rpcInvocation.setTargetServiceName(rpcReferenceWrapper.getAimClass().getName());
+        rpcInvocation.setAttachments(rpcReferenceWrapper.getAttachments());
         rpcInvocation.setUuid(UUID.randomUUID().toString());
         RESP_MAP.put(rpcInvocation.getUuid(), OBJECT);
         SEND_QUEUE.add(rpcInvocation);
