@@ -1,0 +1,2 @@
+rotate=com.vv.core.router.impl.RotateRouterImpl
+random=com.vv.core.router.impl.RandomRouterImpl

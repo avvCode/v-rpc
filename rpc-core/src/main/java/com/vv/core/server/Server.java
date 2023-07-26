@@ -4,17 +4,14 @@ import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
 import com.vv.core.common.event.VRpcListenerLoader;
 import com.vv.core.common.utils.CommonUtils;
-import com.vv.core.config.PropertiesBootstrap;
-import com.vv.core.config.ServerConfig;
+import com.vv.core.common.config.PropertiesBootstrap;
+import com.vv.core.common.config.ServerConfig;
+import com.vv.core.filter.IServerFilter;
 import com.vv.core.filter.server.ServerFilterChain;
-import com.vv.core.filter.server.ServerLogFilterImpl;
-import com.vv.core.filter.server.ServerTokenFilterImpl;
-import com.vv.core.registy.URL;
-import com.vv.core.registy.zookeeper.ZookeeperRegister;
-import com.vv.core.serialize.fastjson.FastJsonSerializeFactory;
-import com.vv.core.serialize.hessian.HessianSerializeFactory;
-import com.vv.core.serialize.jdk.JdkSerializeFactory;
-import com.vv.core.serialize.kryo.KryoSerializeFactory;
+import com.vv.core.registry.RegistryService;
+import com.vv.core.registry.URL;
+import com.vv.core.registry.zookeeper.AbstractRegister;
+import com.vv.core.serialize.SerializeFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -24,8 +21,13 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.Data;
 
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import static com.vv.core.common.cache.ClientCache.EXTENSION_LOADER;
 import static com.vv.core.common.cache.ServerCache.*;
-import static com.vv.core.common.constant.RpcConstant.*;
+import static com.vv.core.spi.ExtensionLoader.EXTENSION_LOADER_CLASS_CACHE;
 
 /**
  * @author vv
@@ -69,31 +71,31 @@ public class Server {
         bootstrap.bind(serverConfig.getServerPort()).sync();
     }
 
-    public void initServerConfig() {
+    public void initServerConfig() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         ServerConfig serverConfig = PropertiesBootstrap.loadServerConfigFromLocal();
         this.setServerConfig(serverConfig);
-        String serverSerialize = serverConfig.getServerSerialize();
-        switch (serverSerialize) {
-            case JDK_SERIALIZE_TYPE:
-                SERVER_SERIALIZE_FACTORY = new JdkSerializeFactory();
-                break;
-            case FAST_JSON_SERIALIZE_TYPE:
-                SERVER_SERIALIZE_FACTORY = new FastJsonSerializeFactory();
-                break;
-            case HESSIAN2_SERIALIZE_TYPE:
-                SERVER_SERIALIZE_FACTORY = new HessianSerializeFactory();
-                break;
-            case KRYO_SERIALIZE_TYPE:
-                SERVER_SERIALIZE_FACTORY = new KryoSerializeFactory();
-                break;
-            default:
-                throw new RuntimeException("no match serialize type for" + serverSerialize);
-        }
-        System.out.println("serverSerialize is "+serverSerialize);
         SERVER_CONFIG = serverConfig;
+        //序列化技术初始化
+        String serverSerialize = serverConfig.getServerSerialize();
+        EXTENSION_LOADER.loadExtension(SerializeFactory.class);
+        LinkedHashMap<String, Class> serializeFactoryClassMap = EXTENSION_LOADER_CLASS_CACHE.get(SerializeFactory.class.getName());
+        Class serializeFactoryClass = serializeFactoryClassMap.get(serverSerialize);
+        if (serializeFactoryClass == null) {
+            throw new RuntimeException("no match serialize type for " + serverSerialize);
+        }
+
+        SERVER_SERIALIZE_FACTORY = (SerializeFactory) serializeFactoryClass.newInstance();
+        //过滤链技术初始化
+        EXTENSION_LOADER.loadExtension(IServerFilter.class);
+        LinkedHashMap<String, Class> iServerFilterClassMap = EXTENSION_LOADER_CLASS_CACHE.get(IServerFilter.class.getName());
         ServerFilterChain serverFilterChain = new ServerFilterChain();
-        serverFilterChain.addServerFilter(new ServerLogFilterImpl());
-        serverFilterChain.addServerFilter(new ServerTokenFilterImpl());
+        for (String iServerFilterKey : iServerFilterClassMap.keySet()) {
+            Class iServerFilterClass = iServerFilterClassMap.get(iServerFilterKey);
+            if(iServerFilterClass==null){
+                throw new RuntimeException("no match iServerFilter type for " + iServerFilterKey);
+            }
+            serverFilterChain.addServerFilter((IServerFilter) iServerFilterClass.newInstance());
+        }
         SERVER_FILTER_CHAIN = serverFilterChain;
     }
 
@@ -112,7 +114,14 @@ public class Server {
             throw new RuntimeException("service must only had one interfaces!");
         }
         if (REGISTRY_SERVICE == null) {
-            REGISTRY_SERVICE = new ZookeeperRegister(serverConfig.getRegisterAddr());
+            try {
+                EXTENSION_LOADER.loadExtension(RegistryService.class);
+                Map<String, Class> registryClassMap = EXTENSION_LOADER_CLASS_CACHE.get(RegistryService.class.getName());
+                Class registryClass = registryClassMap.get(serverConfig.getRegisterType());
+                REGISTRY_SERVICE = (AbstractRegister) registryClass.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("registryServiceType unKnow,error is ", e);
+            }
         }
         //默认选择该对象的第一个实现接口
         Class interfaceClass = classes[0];
@@ -149,7 +158,7 @@ public class Server {
     }
 
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         Server server = new Server();
         server.initServerConfig();
         vRpcListenerLoader = new VRpcListenerLoader();

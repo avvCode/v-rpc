@@ -1,21 +1,17 @@
-package com.vv.core.registy.zookeeper;
+package com.vv.core.registry.zookeeper;
 
-import com.vv.core.registy.URL;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 
 
 import java.util.Collections;
 import java.util.List;
-
-import static org.apache.zookeeper.Watcher.Event.EventType.NodeDeleted;
 
 /**
  * @author vv

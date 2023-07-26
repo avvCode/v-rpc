@@ -1,4 +1,4 @@
-package com.vv.core.registy.zookeeper;
+package com.vv.core.registry.zookeeper;
 
 import com.alibaba.fastjson.JSON;
 import com.vv.core.common.event.VRpcEvent;
@@ -6,9 +6,8 @@ import com.vv.core.common.event.VRpcListenerLoader;
 import com.vv.core.common.event.VRpcNodeChangeEvent;
 import com.vv.core.common.event.VRpcUpdateEvent;
 import com.vv.core.common.event.data.URLChangeWrapper;
-import com.vv.core.registy.RegistryService;
-import com.vv.core.registy.URL;
-import com.vv.interfaces.DataService;
+import com.vv.core.registry.RegistryService;
+import com.vv.core.registry.URL;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 
@@ -16,6 +15,9 @@ import org.apache.zookeeper.Watcher;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.vv.core.common.cache.ClientCache.CLIENT_CONFIG;
+import static com.vv.core.common.cache.ServerCache.SERVER_CONFIG;
 
 
 public class ZookeeperRegister extends AbstractRegister implements RegistryService {
@@ -39,6 +41,11 @@ public class ZookeeperRegister extends AbstractRegister implements RegistryServi
 
     private String getConsumerPath(URL url) {
         return ROOT + "/" + url.getServiceName() + "/consumer/" + url.getApplicationName() + ":" + url.getParameters().get("host") + ":";
+    }
+
+    public ZookeeperRegister() {
+        String registryAddr = CLIENT_CONFIG!= null ? CLIENT_CONFIG.getRegisterAddr() : SERVER_CONFIG.getRegisterAddr();
+        this.zkClient = new CuratorZookeeperClient(registryAddr);
     }
 
     public ZookeeperRegister(String address) {

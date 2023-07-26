@@ -1,0 +1,4 @@
+kryo=com.vv.core.serialize.kryo.KryoSerializeFactory
+jdk=com.vv.core.serialize.jdk.JdkSerializeFactory
+hessian=com.vv.core.serialize.hessian.HessianSerializeFactory
+fastJson=com.vv.core.serialize.fastjson.FastJsonSerializeFactory

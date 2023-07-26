@@ -1,4 +1,4 @@
-package com.vv.core.filter.server;
+package com.vv.core.filter;
 
 import com.vv.core.common.RpcInvocation;
 

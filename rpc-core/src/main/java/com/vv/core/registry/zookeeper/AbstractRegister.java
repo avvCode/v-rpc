@@ -1,8 +1,8 @@
-package com.vv.core.registy.zookeeper;
+package com.vv.core.registry.zookeeper;
 
 
-import com.vv.core.registy.RegistryService;
-import com.vv.core.registy.URL;
+import com.vv.core.registry.RegistryService;
+import com.vv.core.registry.URL;
 import java.util.List;
 import java.util.Map;
 

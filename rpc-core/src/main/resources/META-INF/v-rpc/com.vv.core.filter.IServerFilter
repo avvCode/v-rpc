@@ -1,0 +1,2 @@
+serverLogFilterImpl=com.vv.core.filter.server.ServerLogFilterImpl
+serverTokenFilterImpl=com.vv.core.filter.server.ServerTokenFilterImpl

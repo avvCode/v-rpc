@@ -2,6 +2,7 @@ package com.vv.core.filter.server;
 
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.utils.CommonUtils;
+import com.vv.core.filter.IServerFilter;
 import com.vv.core.server.ServiceWrapper;
 
 import static com.vv.core.common.cache.ServerCache.PROVIDER_SERVICE_WRAPPER_MAP;

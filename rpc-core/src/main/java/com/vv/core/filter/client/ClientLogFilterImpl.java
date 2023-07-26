@@ -2,6 +2,7 @@ package com.vv.core.filter.client;
 
 import com.vv.core.common.ChannelFutureWrapper;
 import com.vv.core.common.RpcInvocation;
+import com.vv.core.filter.IClientFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ import static com.vv.core.common.cache.ClientCache.CLIENT_CONFIG;
  * @Description TODO
  * @date 2023/7/25-17:55
  */
-public class ClientLogFilterImpl implements IClientFilter{
+public class ClientLogFilterImpl implements IClientFilter {
     private static Logger logger = LoggerFactory.getLogger(ClientLogFilterImpl.class);
 
     @Override

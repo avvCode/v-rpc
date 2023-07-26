@@ -1,7 +1,7 @@
 package com.vv.core.common.event.listener;
 
 import com.vv.core.common.event.VRpcDestroyEvent;
-import com.vv.core.registy.URL;
+import com.vv.core.registry.URL;
 
 import static com.vv.core.common.cache.ServerCache.PROVIDER_URL_SET;
 import static com.vv.core.common.cache.ServerCache.REGISTRY_SERVICE;

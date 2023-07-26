@@ -3,27 +3,20 @@ package com.vv.core.client;
 import com.alibaba.fastjson.JSON;
 import com.vv.core.common.event.VRpcListenerLoader;
 import com.vv.core.common.utils.CommonUtils;
-import com.vv.core.config.ClientConfig;
-import com.vv.core.config.PropertiesBootstrap;
-import com.vv.core.filter.client.ClientFilterChain;
-import com.vv.core.filter.client.ClientLogFilterImpl;
-import com.vv.core.filter.client.DirectInvokeFilterImpl;
-import com.vv.core.filter.client.GroupFilterImpl;
-import com.vv.core.proxy.javassist.JavassistProxyFactory;
+import com.vv.core.common.config.ClientConfig;
+import com.vv.core.common.config.PropertiesBootstrap;
+import com.vv.core.filter.IClientFilter;
+import com.vv.core.filter.client.*;
+import com.vv.core.proxy.ProxyFactory;
 import com.vv.core.common.RpcDecoder;
 import com.vv.core.common.RpcEncoder;
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.RpcProtocol;
-import com.vv.core.proxy.jdk.JDKProxyFactory;
-import com.vv.core.registy.URL;
-import com.vv.core.registy.zookeeper.AbstractRegister;
-import com.vv.core.registy.zookeeper.ZookeeperRegister;
-import com.vv.core.router.impl.RandomRouterImpl;
-import com.vv.core.router.impl.RotateRouterImpl;
-import com.vv.core.serialize.fastjson.FastJsonSerializeFactory;
-import com.vv.core.serialize.hessian.HessianSerializeFactory;
-import com.vv.core.serialize.jdk.JdkSerializeFactory;
-import com.vv.core.serialize.kryo.KryoSerializeFactory;
+import com.vv.core.registry.RegistryService;
+import com.vv.core.registry.URL;
+import com.vv.core.registry.zookeeper.AbstractRegister;
+import com.vv.core.router.IRouter;
+import com.vv.core.serialize.SerializeFactory;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -36,11 +29,13 @@ import com.vv.interfaces.DataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.vv.core.common.cache.ClientCache.*;
-import static com.vv.core.common.constant.RpcConstant.*;
+import static com.vv.core.spi.ExtensionLoader.EXTENSION_LOADER_CLASS_CACHE;
 
 
 /**
@@ -56,7 +51,6 @@ public class Client {
 
     private ClientConfig clientConfig;
 
-    private AbstractRegister abstractRegister;
 
     private VRpcListenerLoader vRpcListenerLoader;
 
@@ -67,7 +61,7 @@ public class Client {
     }
 
 
-    public RpcReference initClientApplication() {
+    public RpcReference initClientApplication() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         EventLoopGroup clientGroup = new NioEventLoopGroup();
         bootstrap.group(clientGroup);
         bootstrap.channel(NioSocketChannel.class);
@@ -83,13 +77,14 @@ public class Client {
         vRpcListenerLoader.init();
         this.clientConfig = PropertiesBootstrap.loadClientConfigFromLocal();
         CLIENT_CONFIG = this.clientConfig;
-        RpcReference rpcReference;
-        if (JAVASSIST_PROXY_TYPE.equals(clientConfig.getProxyType())) {
-            rpcReference = new RpcReference(new JavassistProxyFactory());
-        } else {
-            rpcReference = new RpcReference(new JDKProxyFactory());
-        }
-        return rpcReference;
+       EXTENSION_LOADER.loadExtension(ProxyFactory.class);
+       String proxyType = clientConfig.getProxyType();
+        LinkedHashMap<String, Class> classMap = EXTENSION_LOADER_CLASS_CACHE.get(ProxyFactory.class.getName());
+
+        Class proxyClassType = classMap.get(proxyType);
+        ProxyFactory proxyFactory = (ProxyFactory) proxyClassType.newInstance();
+
+        return new RpcReference(proxyFactory);
     }
 
     /**
@@ -98,16 +93,23 @@ public class Client {
      * @param serviceBean
      */
     public void doSubscribeService(Class serviceBean) {
-        if (abstractRegister == null) {
-            abstractRegister = new ZookeeperRegister(clientConfig.getRegisterAddr());
+        if (ABSTRACT_REGISTER == null) {
+            try {
+                EXTENSION_LOADER.loadExtension(RegistryService.class);
+                Map<String, Class> registerMap = EXTENSION_LOADER_CLASS_CACHE.get(RegistryService.class.getName());
+                Class registerClass =  registerMap.get(clientConfig.getRegisterType());
+                ABSTRACT_REGISTER = (AbstractRegister) registerClass.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("registryServiceType unKnow,error is ", e);
+            }
         }
         URL url = new URL();
         url.setApplicationName(clientConfig.getApplicationName());
         url.setServiceName(serviceBean.getName());
         url.addParameter("host", CommonUtils.getIpAddress());
-        Map<String, String> result = abstractRegister.getServiceWeightMap(serviceBean.getName());
+        Map<String, String> result = ABSTRACT_REGISTER.getServiceWeightMap(serviceBean.getName());
         URL_MAP.put(serviceBean.getName(),result);
-        abstractRegister.subscribe(url);
+        ABSTRACT_REGISTER.subscribe(url);
     }
 
     /**
@@ -115,7 +117,7 @@ public class Client {
      */
     public void doConnectServer() {
         for (URL providerURL : SUBSCRIBE_SERVICE_LIST) {
-            List<String> providerIps = abstractRegister.getProviderIps(providerURL.getServiceName());
+            List<String> providerIps = ABSTRACT_REGISTER.getProviderIps(providerURL.getServiceName());
             for (String providerIp : providerIps) {
                 try {
                     ConnectionHandler.connect(providerURL.getServiceName(), providerIp);
@@ -126,7 +128,7 @@ public class Client {
             URL url = new URL();
             url.addParameter("servicePath",providerURL.getServiceName()+"/provider");
             url.addParameter("providerIps", JSON.toJSONString(providerIps));
-            abstractRegister.doAfterSubscribe(url);
+            ABSTRACT_REGISTER.doAfterSubscribe(url);
         }
     }
 
@@ -167,40 +169,37 @@ public class Client {
     /**
      * 后续可以考虑加入spi
      */
-    private void initClientConfig() {
+    private void initClientConfig() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         //初始化路由策略
+        EXTENSION_LOADER.loadExtension(IRouter.class);
         String routerStrategy = clientConfig.getRouterStrategy();
-        switch (routerStrategy) {
-            case RANDOM_ROUTER_TYPE:
-                IROUTER = new RandomRouterImpl();
-                break;
-            case ROTATE_ROUTER_TYPE:
-                IROUTER = new RotateRouterImpl();
-                break;
-            default:
-                throw new RuntimeException("no match routerStrategy for" + routerStrategy);
+        LinkedHashMap<String, Class> iRouterMap = EXTENSION_LOADER_CLASS_CACHE.get(IRouter.class.getName());
+        Class iRouterClass = iRouterMap.get(routerStrategy);
+        if (iRouterClass == null) {
+            throw new RuntimeException("no match routerStrategy for " + routerStrategy);
         }
+        IROUTER = (IRouter) iRouterClass.newInstance();
+        //初始化序列化框架
+        EXTENSION_LOADER.loadExtension(SerializeFactory.class);
         String clientSerialize = clientConfig.getClientSerialize();
-        switch (clientSerialize) {
-            case JDK_SERIALIZE_TYPE:
-                CLIENT_SERIALIZE_FACTORY = new JdkSerializeFactory();
-                break;
-            case FAST_JSON_SERIALIZE_TYPE:
-                CLIENT_SERIALIZE_FACTORY = new FastJsonSerializeFactory();
-                break;
-            case HESSIAN2_SERIALIZE_TYPE:
-                CLIENT_SERIALIZE_FACTORY = new HessianSerializeFactory();
-                break;
-            case KRYO_SERIALIZE_TYPE:
-                CLIENT_SERIALIZE_FACTORY = new KryoSerializeFactory();
-                break;
-            default:
-                throw new RuntimeException("no match serialize type for " + clientSerialize);
+        LinkedHashMap<String, Class> serializeMap = EXTENSION_LOADER_CLASS_CACHE.get(SerializeFactory.class.getName());
+        Class serializeFactoryClass = serializeMap.get(clientSerialize);
+        if (serializeFactoryClass == null) {
+            throw new RuntimeException("no match serialize type for " + clientSerialize);
         }
+        CLIENT_SERIALIZE_FACTORY = (SerializeFactory) serializeFactoryClass.newInstance();
+
+        //初始化过滤链
+        EXTENSION_LOADER.loadExtension(IClientFilter.class);
         ClientFilterChain clientFilterChain = new ClientFilterChain();
-        clientFilterChain.addClientFilter(new DirectInvokeFilterImpl());
-        clientFilterChain.addClientFilter(new GroupFilterImpl());
-        clientFilterChain.addClientFilter(new ClientLogFilterImpl());
+        LinkedHashMap<String, Class> iClientMap = EXTENSION_LOADER_CLASS_CACHE.get(IClientFilter.class.getName());
+        for (String implClassName : iClientMap.keySet()) {
+            Class iClientFilterClass = iClientMap.get(implClassName);
+            if (iClientFilterClass == null) {
+                throw new RuntimeException("no match iClientFilter for " + iClientFilterClass);
+            }
+            clientFilterChain.addClientFilter((IClientFilter) iClientFilterClass.newInstance());
+        }
         CLIENT_FILTER_CHAIN = clientFilterChain;
     }
 

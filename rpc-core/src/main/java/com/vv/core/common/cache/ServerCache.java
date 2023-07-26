@@ -1,9 +1,9 @@
 package com.vv.core.common.cache;
 
-import com.vv.core.config.ServerConfig;
+import com.vv.core.common.config.ServerConfig;
 import com.vv.core.filter.server.ServerFilterChain;
-import com.vv.core.registy.RegistryService;
-import com.vv.core.registy.URL;
+import com.vv.core.registry.RegistryService;
+import com.vv.core.registry.URL;
 import com.vv.core.serialize.SerializeFactory;
 import com.vv.core.server.ServiceWrapper;
 

@@ -1,4 +1,4 @@
-package com.vv.core.filter.client;
+package com.vv.core.filter;
 
 import com.vv.core.common.ChannelFutureWrapper;
 import com.vv.core.common.RpcInvocation;

@@ -2,6 +2,7 @@ package com.vv.core.filter.client;
 
 import com.vv.core.common.ChannelFutureWrapper;
 import com.vv.core.common.RpcInvocation;
+import com.vv.core.filter.IClientFilter;
 
 import java.util.ArrayList;
 import java.util.List;

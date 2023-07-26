@@ -1,4 +1,4 @@
-package com.vv.core.config;
+package com.vv.core.common.config;
 
 import lombok.Data;
 
@@ -28,4 +28,6 @@ public class ServerConfig {
      * 服务端序列化方式 example: hession2,kryo,jdk,fastjson
      */
     private String serverSerialize;
+
+    private String registerType;
 }

@@ -1,6 +1,6 @@
-package com.vv.core.registy;
+package com.vv.core.registry;
 
-import com.vv.core.registy.zookeeper.ProviderNodeInfo;
+import com.vv.core.registry.zookeeper.ProviderNodeInfo;
 import lombok.Data;
 
 import java.nio.charset.StandardCharsets;

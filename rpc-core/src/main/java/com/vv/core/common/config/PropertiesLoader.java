@@ -1,4 +1,4 @@
-package com.vv.core.config;
+package com.vv.core.common.config;
 
 
 
@@ -34,7 +34,13 @@ public class PropertiesLoader {
         in = new FileInputStream(DEFAULT_PROPERTIES_FILE);
         properties.load(in);
     }
-
+    public static String getPropertiesNotBlank(String key) {
+        String val = getPropertiesStr(key);
+        if (val == null || val.equals("")) {
+            throw new IllegalArgumentException(key + " 配置为空异常");
+        }
+        return val;
+    }
     /**
      * 根据键值获取配置属性
      *

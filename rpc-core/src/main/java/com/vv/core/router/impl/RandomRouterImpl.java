@@ -1,7 +1,7 @@
 package com.vv.core.router.impl;
 
 import com.vv.core.common.ChannelFutureWrapper;
-import com.vv.core.registy.URL;
+import com.vv.core.registry.URL;
 import com.vv.core.router.IRouter;
 import com.vv.core.router.Selector;
 

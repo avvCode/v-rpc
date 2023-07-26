@@ -1,4 +1,4 @@
-package com.vv.core.config;
+package com.vv.core.common.config;
 
 import lombok.Data;
 
@@ -23,6 +23,11 @@ public class ClientConfig {
      * 代理实现方式
      */
     private String proxyType;
+
+    /**
+     * 注册中心类型
+     */
+    private String registerType;
 
     /**
      * 负载均衡策略 example:random,rotate

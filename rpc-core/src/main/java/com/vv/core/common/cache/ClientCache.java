@@ -3,11 +3,13 @@ package com.vv.core.common.cache;
 import com.vv.core.common.ChannelFuturePollingRef;
 import com.vv.core.common.ChannelFutureWrapper;
 import com.vv.core.common.RpcInvocation;
-import com.vv.core.config.ClientConfig;
+import com.vv.core.common.config.ClientConfig;
 import com.vv.core.filter.client.ClientFilterChain;
-import com.vv.core.registy.URL;
+import com.vv.core.registry.URL;
+import com.vv.core.registry.zookeeper.AbstractRegister;
 import com.vv.core.router.IRouter;
 import com.vv.core.serialize.SerializeFactory;
+import com.vv.core.spi.ExtensionLoader;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -39,5 +41,9 @@ public class ClientCache {
     public static ClientConfig CLIENT_CONFIG;
 
     public static ClientFilterChain CLIENT_FILTER_CHAIN;
+
+    public static AbstractRegister ABSTRACT_REGISTER;
+
+    public static ExtensionLoader  EXTENSION_LOADER = new ExtensionLoader();
 
 }

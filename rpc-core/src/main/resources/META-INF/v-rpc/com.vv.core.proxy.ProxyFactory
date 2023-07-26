@@ -1,0 +1,2 @@
+jdk=com.vv.core.proxy.jdk.JDKProxyFactory
+javassist=com.vv.core.proxy.javassist.JavassistProxyFactory

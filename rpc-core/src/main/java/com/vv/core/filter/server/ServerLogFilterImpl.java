@@ -1,6 +1,7 @@
 package com.vv.core.filter.server;
 
 import com.vv.core.common.RpcInvocation;
+import com.vv.core.filter.IServerFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,7 +1,7 @@
 package com.vv.core.router;
 
 import com.vv.core.common.ChannelFutureWrapper;
-import com.vv.core.registy.URL;
+import com.vv.core.registry.URL;
 
 /**
  * @author vv

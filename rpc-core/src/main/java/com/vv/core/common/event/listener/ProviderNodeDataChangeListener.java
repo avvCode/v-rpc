@@ -2,8 +2,8 @@ package com.vv.core.common.event.listener;
 
 import com.vv.core.common.ChannelFutureWrapper;
 import com.vv.core.common.event.VRpcNodeChangeEvent;
-import com.vv.core.registy.URL;
-import com.vv.core.registy.zookeeper.ProviderNodeInfo;
+import com.vv.core.registry.URL;
+import com.vv.core.registry.zookeeper.ProviderNodeInfo;
 
 import java.util.List;
 
