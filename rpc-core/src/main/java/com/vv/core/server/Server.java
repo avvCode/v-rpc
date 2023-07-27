@@ -68,13 +68,17 @@ public class Server {
             }
         });
         this.batchExportUrl();
+        SERVER_CHANNEL_DISPATCHER.startDataConsume();
         bootstrap.bind(serverConfig.getServerPort()).sync();
+        IS_STARTED=true;
     }
 
     public void initServerConfig() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         ServerConfig serverConfig = PropertiesBootstrap.loadServerConfigFromLocal();
         this.setServerConfig(serverConfig);
         SERVER_CONFIG = serverConfig;
+        //初始化线程池和队列的配置
+        SERVER_CHANNEL_DISPATCHER.init(SERVER_CONFIG.getServerQueueSize(),SERVER_CONFIG.getServerBizThreadNums());
         //序列化技术初始化
         String serverSerialize = serverConfig.getServerSerialize();
         EXTENSION_LOADER.loadExtension(SerializeFactory.class);

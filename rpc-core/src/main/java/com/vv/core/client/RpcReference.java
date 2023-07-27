@@ -2,6 +2,8 @@ package com.vv.core.client;
 
 import com.vv.core.proxy.ProxyFactory;
 
+import static com.vv.core.common.cache.ClientCache.CLIENT_CONFIG;
+
 /**
  * @author vv
  * @Description 封装多一层代理
@@ -28,6 +30,17 @@ public class RpcReference {
      * @return
      */
     public <T> T get(RpcReferenceWrapper<T> rpcReferenceWrapper) throws Throwable {
+        initGlobalRpcReferenceWrapperConfig(rpcReferenceWrapper);
         return proxyFactory.getProxy(rpcReferenceWrapper);
+    }
+    /**
+     * 初始化远程调用的一些全局配置,例如超时
+     *
+     * @param rpcReferenceWrapper
+     */
+    private void initGlobalRpcReferenceWrapperConfig(RpcReferenceWrapper rpcReferenceWrapper) {
+        if (rpcReferenceWrapper.getTimeOUt() == null) {
+            rpcReferenceWrapper.setTimeOut(CLIENT_CONFIG.getTimeOut());
+        }
     }
 }

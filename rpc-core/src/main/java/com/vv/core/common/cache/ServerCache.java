@@ -1,6 +1,7 @@
 package com.vv.core.common.cache;
 
 import com.vv.core.common.config.ServerConfig;
+import com.vv.core.dispatcher.ServerChannelDispatcher;
 import com.vv.core.filter.server.ServerFilterChain;
 import com.vv.core.registry.RegistryService;
 import com.vv.core.registry.URL;
@@ -37,4 +38,8 @@ public class ServerCache {
     public static ServerFilterChain SERVER_FILTER_CHAIN;
 
     public static final Map<String, ServiceWrapper> PROVIDER_SERVICE_WRAPPER_MAP = new ConcurrentHashMap<>();
+
+    public static ServerChannelDispatcher SERVER_CHANNEL_DISPATCHER = new ServerChannelDispatcher();
+
+    public static Boolean IS_STARTED = false;
 }

@@ -13,8 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static com.vv.core.common.cache.ServerCache.SERVER_FILTER_CHAIN;
-import static com.vv.core.common.cache.ServerCache.SERVER_SERIALIZE_FACTORY;
+import static com.vv.core.common.cache.ServerCache.*;
 
 /**
  * @author vv
@@ -25,42 +24,10 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     private static Logger logger = LoggerFactory.getLogger(ServerHandler.class);
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws InvocationTargetException, IllegalAccessException {
-        System.out.println(msg);
-        RpcProtocol protocol = (RpcProtocol) msg;
-        byte[] content = protocol.getContent();
-        RpcInvocation rpcInvocation = SERVER_SERIALIZE_FACTORY.deserialize(content, RpcInvocation.class);
-        //logger.info("收到客户端消息：{}",rpcInvocation);
-        //执行过滤链路
-        SERVER_FILTER_CHAIN.doFilter(rpcInvocation);
-        //请求的类名
-        String serviceName = rpcInvocation.getTargetServiceName();
-        //请求的方法名
-        String methodName = rpcInvocation.getTargetMethod();
-        //请求的参数
-        Object[] args = rpcInvocation.getArgs();
-        //获取请求的对象
-        Object aimObject = ServerCache.PROVIDER_CLASS_MAP.get(serviceName);
-        //结果
-        Object result = null;
-        //获取服务的方法
-        Method[] methods = aimObject.getClass().getDeclaredMethods();
-        //遍历对象中的方法
-        for(Method method : methods){
-            if(method.getName().equals(methodName)){
-                System.out.println("执行方法");
-               if(method.getReturnType().equals(Void.TYPE)){
-                   method.invoke(aimObject, args);
-               }else {
-                   //找到需要执行的方法
-                   result = method.invoke(aimObject, args);
-               }
-               break;
-            }
-        }
-        //封装需要返回客户端的信息
-        rpcInvocation.setResponse(result);
-        RpcProtocol rpcProtocol = new RpcProtocol(SERVER_SERIALIZE_FACTORY.serialize(rpcInvocation));
-        ctx.writeAndFlush(rpcProtocol);
+        ServerChannelReadData serverChannelReadData = new ServerChannelReadData();
+        serverChannelReadData.setRpcProtocol((RpcProtocol) msg);
+        serverChannelReadData.setChannelHandlerContext(ctx);
+        SERVER_CHANNEL_DISPATCHER.add(serverChannelReadData);
     }
 
     @Override

@@ -212,6 +212,7 @@ public class Client {
         rpcReferenceWrapper.setAimClass(DataService.class);
         rpcReferenceWrapper.setGroup("dev");
         rpcReferenceWrapper.setServiceToken("token-a");
+        rpcReferenceWrapper.setTimeOut(3000);
 //        rpcReferenceWrapper.setUrl("192.168.43.227:9093");
         //在初始化之前必须要设置对应的上下文
         DataService dataService = rpcReference.get(rpcReferenceWrapper);

@@ -12,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 import static com.vv.core.common.cache.ClientCache.RESP_MAP;
 import static com.vv.core.common.cache.ClientCache.SEND_QUEUE;
+import static com.vv.core.common.constant.RpcConstant.DEFAULT_TIMEOUT;
 
 /**
  * @author vv
@@ -23,16 +24,14 @@ public class JavassistInvocationHandler implements InvocationHandler {
 
 
     private final static Object OBJECT = new Object();
+
     private RpcReferenceWrapper rpcReferenceWrapper;
+
+    private Long timeOut = Long.valueOf(DEFAULT_TIMEOUT);
 
     public JavassistInvocationHandler(RpcReferenceWrapper rpcReferenceWrapper) {
         this.rpcReferenceWrapper = rpcReferenceWrapper;
-    }
-
-    private Class<?> clazz;
-
-    public JavassistInvocationHandler(Class<?> clazz) {
-        this.clazz = clazz;
+        timeOut = Long.valueOf(String.valueOf(rpcReferenceWrapper.getAttachments().get("timeOut")));
     }
 
     @Override
@@ -43,15 +42,19 @@ public class JavassistInvocationHandler implements InvocationHandler {
         rpcInvocation.setTargetServiceName(rpcReferenceWrapper.getAimClass().getName());
         rpcInvocation.setAttachments(rpcReferenceWrapper.getAttachments());
         rpcInvocation.setUuid(UUID.randomUUID().toString());
-        RESP_MAP.put(rpcInvocation.getUuid(), OBJECT);
         SEND_QUEUE.add(rpcInvocation);
+        if (rpcReferenceWrapper.isAsync()) {
+            return null;
+        }
+        RESP_MAP.put(rpcInvocation.getUuid(), OBJECT);
         long beginTime = System.currentTimeMillis();
-        while (System.currentTimeMillis() - beginTime < 3*1000) {
+        while (System.currentTimeMillis() - beginTime < timeOut) {
             Object object = RESP_MAP.get(rpcInvocation.getUuid());
             if (object instanceof RpcInvocation) {
-                return ((RpcInvocation)object).getResponse();
+                return ((RpcInvocation) object).getResponse();
             }
         }
-        throw new TimeoutException("client wait server's response timeout!");
+        //修改异常信息
+        throw new TimeoutException("Wait for response from server on client " + timeOut + "ms,Service's name is " + rpcInvocation.getTargetServiceName() + "#" + rpcInvocation.getTargetMethod());
     }
 }

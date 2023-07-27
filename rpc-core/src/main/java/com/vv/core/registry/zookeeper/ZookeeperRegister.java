@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.vv.core.common.cache.ClientCache.CLIENT_CONFIG;
+import static com.vv.core.common.cache.ServerCache.IS_STARTED;
 import static com.vv.core.common.cache.ServerCache.SERVER_CONFIG;
 
 
@@ -87,6 +88,9 @@ public class ZookeeperRegister extends AbstractRegister implements RegistryServi
 
     @Override
     public void unRegister(URL url) {
+        if (!IS_STARTED) {
+            return;
+        }
         zkClient.deleteNode(getProviderPath(url));
         super.unRegister(url);
     }
