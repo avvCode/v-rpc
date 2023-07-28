@@ -24,4 +24,8 @@ public class RpcInvocation implements Serializable {
     private Object response;
     //额外数据，包含服务分组、服务token鉴权字段
     private Map<String, Object> attachments = new ConcurrentHashMap<>();
+    //服务端异常
+    private Throwable e;
+    //超时重试次数
+    private int retry;
 }

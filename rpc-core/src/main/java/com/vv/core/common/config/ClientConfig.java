@@ -43,4 +43,9 @@ public class ClientConfig {
      * 客户端发数据的超时时间
      */
     private Integer timeOut;
+
+    /**
+     * 客户端最大响应数据体积
+     */
+    private Integer maxServerRespDataSize;
 }

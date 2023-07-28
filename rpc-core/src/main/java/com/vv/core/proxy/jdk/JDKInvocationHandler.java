@@ -42,15 +42,34 @@ public class JDKInvocationHandler implements InvocationHandler {
         if (rpcReferenceWrapper.isAsync()) {
             return null;
         }
-        long beginTime = System.currentTimeMillis();
         RESP_MAP.put(rpcInvocation.getUuid(), OBJECT);
-        //如果这里有多个io线程负责监听消息信息，是否效率会更高呢？
-        while (System.currentTimeMillis() - beginTime < timeOut) {
+        long beginTime = System.currentTimeMillis();
+        int retryTimes = 0;
+        //判断是否出现了超时异常 或者 是否设置了重置次数
+        while (System.currentTimeMillis() - beginTime < timeOut || rpcInvocation.getRetry() > 0) {
             Object object = RESP_MAP.get(rpcInvocation.getUuid());
             if (object instanceof RpcInvocation) {
-                return ((RpcInvocation) object).getResponse();
+                RpcInvocation rpcInvocationResp = (RpcInvocation) object;
+                //正常结果
+                if (rpcInvocationResp.getRetry() == 0 && rpcInvocationResp.getE() == null) {
+                    return rpcInvocationResp.getResponse();
+                } else if (rpcInvocationResp.getE() != null) {
+                    //每次重试之后都会将retry值扣减1
+                    if (rpcInvocationResp.getRetry() == 0) {
+                        return rpcInvocationResp.getResponse();
+                    }
+                    //如果是因为超时的情况，才会触发重试规则，否则重试机制不生效
+                    if (System.currentTimeMillis() - beginTime > timeOut) {
+                        retryTimes++;
+                        //重新请求
+                        rpcInvocation.setResponse(null);
+                        rpcInvocation.setRetry(rpcInvocationResp.getRetry() - 1);
+                        RESP_MAP.put(rpcInvocation.getUuid(), OBJECT);
+                        SEND_QUEUE.add(rpcInvocation);
+                    }
+                }
             }
         }
-        throw new TimeoutException("wait for response from server on client " + timeOut + "ms!");
+        throw new TimeoutException("Wait for response from server on client " + timeOut + "ms,retry times is " + retryTimes + ",service's name is " + rpcInvocation.getTargetServiceName() + "#" + rpcInvocation.getTargetMethod());
     }
 }
