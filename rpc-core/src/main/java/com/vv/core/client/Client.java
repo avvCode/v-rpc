@@ -18,12 +18,15 @@ import com.vv.core.registry.zookeeper.AbstractRegister;
 import com.vv.core.router.IRouter;
 import com.vv.core.serialize.SerializeFactory;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import lombok.Data;
 import com.vv.interfaces.DataService;
 import org.slf4j.Logger;
@@ -35,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.vv.core.common.cache.ClientCache.*;
+import static com.vv.core.common.constant.RpcConstant.DEFAULT_DECODE_CHAR;
 import static com.vv.core.spi.ExtensionLoader.EXTENSION_LOADER_CLASS_CACHE;
 
 
@@ -68,6 +72,9 @@ public class Client {
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
+                //分隔符
+                ByteBuf delimiter = Unpooled.copiedBuffer(DEFAULT_DECODE_CHAR.getBytes());
+                ch.pipeline().addLast(new DelimiterBasedFrameDecoder(clientConfig.getMaxServerRespDataSize(), delimiter));
                 ch.pipeline().addLast(new RpcEncoder());
                 ch.pipeline().addLast(new RpcDecoder());
                 ch.pipeline().addLast(new ClientHandler());
@@ -77,6 +84,8 @@ public class Client {
         vRpcListenerLoader.init();
         this.clientConfig = PropertiesBootstrap.loadClientConfigFromLocal();
         CLIENT_CONFIG = this.clientConfig;
+        //spi扩展的加载部分
+        this.initClientConfig();
        EXTENSION_LOADER.loadExtension(ProxyFactory.class);
        String proxyType = clientConfig.getProxyType();
         LinkedHashMap<String, Class> classMap = EXTENSION_LOADER_CLASS_CACHE.get(ProxyFactory.class.getName());

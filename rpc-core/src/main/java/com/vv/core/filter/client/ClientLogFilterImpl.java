@@ -12,7 +12,7 @@ import static com.vv.core.common.cache.ClientCache.CLIENT_CONFIG;
 
 /**
  * @author vv
- * @Description TODO
+ * @Description 客户端日志过滤器
  * @date 2023/7/25-17:55
  */
 public class ClientLogFilterImpl implements IClientFilter {
@@ -21,6 +21,6 @@ public class ClientLogFilterImpl implements IClientFilter {
     @Override
     public void doFilter(List<ChannelFutureWrapper> src, RpcInvocation rpcInvocation) {
         rpcInvocation.getAttachments().put("c_app_name",CLIENT_CONFIG.getApplicationName());
-        logger.info(rpcInvocation.getAttachments().get("c_app_name")+" do invoke -----> "+rpcInvocation.getTargetServiceName());
+        logger.debug(rpcInvocation.getAttachments().get("c_app_name")+" do invoke -----> "+rpcInvocation.getTargetServiceName());
     }
 }

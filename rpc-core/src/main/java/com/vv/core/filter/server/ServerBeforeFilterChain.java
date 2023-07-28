@@ -8,10 +8,10 @@ import java.util.List;
 
 /**
  * @author vv
- * @Description TODO
- * @date 2023/7/25-15:01
+ * @Description 后置过滤
+ * @date 2023/7/28-16:48
  */
-public class ServerFilterChain {
+public class ServerBeforeFilterChain {
     private static List<IServerFilter> iServerFilters = new ArrayList<>();
 
     public void addServerFilter(IServerFilter iServerFilter) {

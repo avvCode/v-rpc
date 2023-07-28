@@ -10,6 +10,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>rpc-core</module>
+        <module>rpc-provider</module>
+        <module>rpc-spring-boot-starter</module>
     </modules>
 
     <properties>
