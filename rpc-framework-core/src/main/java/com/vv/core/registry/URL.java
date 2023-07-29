@@ -71,7 +71,8 @@ public class URL {
         String host = url.getParameters().get("host");
         String port = url.getParameters().get("port");
         String group = url.getParameters().get("group");
-        return new String((url.getApplicationName() + ";" + url.getServiceName() + ";" + host + ":" + port + ";" + System.currentTimeMillis() + ";100;" + group).getBytes(), StandardCharsets.UTF_8);
+        return new String((url.getApplicationName() + ";" + url.getServiceName() + ";" + host + ":" + port + ";"
+                + System.currentTimeMillis() + ";100;" + group).getBytes(), StandardCharsets.UTF_8);
     }
 
     /**
@@ -105,9 +106,5 @@ public class URL {
     }
 
 
-    public static void main(String[] args) {
-        ProviderNodeInfo providerNodeInfo = buildURLFromUrlStr("irpc-provider;org.idea.irpc.framework.interfaces.UserService;192.168.43.227:9093;1643429082637;100;default");
-        System.out.println(providerNodeInfo);
-    }
 
 }

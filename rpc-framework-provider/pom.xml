@@ -10,18 +10,17 @@
     </parent>
 
     <artifactId>rpc-framework-provider</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>rpc-framework-provider-demo</module>
+        <module>rpc-framework-provider-spring</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <dependencies>
-        <dependency>
-            <groupId>com.vv</groupId>
-            <artifactId>rpc-core</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
+
 
 </project>

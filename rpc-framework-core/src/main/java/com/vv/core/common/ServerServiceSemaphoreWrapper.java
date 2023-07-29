@@ -21,5 +21,6 @@ public class ServerServiceSemaphoreWrapper {
 
     public ServerServiceSemaphoreWrapper(int maxNums) {
         this.maxNums = maxNums;
+        this.semaphore = new Semaphore(maxNums);
     }
 }

@@ -182,6 +182,7 @@ public class Server {
                 }
                 for (URL url : PROVIDER_URL_SET) {
                     REGISTRY_SERVICE.register(url);
+                    LOGGER.info("暴露服务：{}",url);
                 }
             }
         });

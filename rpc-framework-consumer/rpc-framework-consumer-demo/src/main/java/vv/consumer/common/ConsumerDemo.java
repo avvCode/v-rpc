@@ -1,4 +1,4 @@
-package com.vv.consumer.common;
+package vv.consumer.common;
 
 
 

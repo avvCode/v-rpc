@@ -12,6 +12,8 @@
         <module>rpc-framework-core</module>
         <module>rpc-framework-provider</module>
         <module>rpc-framework-spring-boot-starter</module>
+        <module>rpc-framework-consumer</module>
+        <module>rpc-framework-interface</module>
     </modules>
 
     <properties>

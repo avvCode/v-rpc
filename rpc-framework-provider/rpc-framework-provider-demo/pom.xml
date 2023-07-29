@@ -5,22 +5,27 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.vv</groupId>
-        <artifactId>v-rpc-framework</artifactId>
+        <artifactId>rpc-framework-provider</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>rpc-framework-consumer</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>rpc-framework-consumer-demo</module>
-        <module>rpc-framework-consumer-spring</module>
-    </modules>
+    <artifactId>rpc-framework-provider-demo</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-
+    <dependencies>
+        <dependency>
+            <groupId>com.vv</groupId>
+            <artifactId>rpc-framework-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vv</groupId>
+            <artifactId>rpc-framework-interface</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>
