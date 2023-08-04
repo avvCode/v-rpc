@@ -57,7 +57,8 @@
 ### 实现概述
 #### 整体结构
 
-<img height="500" src="doc/img_1.png" width="1949"  alt=""/>
+<img height="400" src="doc/img_1.png" width="1949"  alt=""/>
+
 #### 代理层 Proxy
 1.1 支持JDK代理
 
