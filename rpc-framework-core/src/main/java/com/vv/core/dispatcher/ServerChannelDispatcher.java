@@ -3,6 +3,7 @@ package com.vv.core.dispatcher;
 import com.vv.core.common.RpcInvocation;
 import com.vv.core.common.RpcProtocol;
 import com.vv.core.common.exception.IRpcException;
+import com.vv.core.server.NamedThreadFactory;
 import com.vv.core.server.ServerChannelReadData;
 
 import java.lang.reflect.Method;
@@ -26,9 +27,10 @@ public class ServerChannelDispatcher {
 
     public void init(int queueSize, int bizThreadNums) {
         RPC_DATA_QUEUE = new ArrayBlockingQueue<>(queueSize);
-        executorService = new ThreadPoolExecutor(bizThreadNums, bizThreadNums,
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(512));
+        executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                60L, TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(),  new NamedThreadFactory("v-rpc", true));
+
     }
 
     public void add(ServerChannelReadData serverChannelReadData) {
