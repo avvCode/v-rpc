@@ -172,18 +172,15 @@ public class Server {
 
     //延迟暴露
     public void batchExportUrl(){
-        Thread task = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(2500);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                for (URL url : PROVIDER_URL_SET) {
-                    REGISTRY_SERVICE.register(url);
-                    LOGGER.info("暴露服务：{}",url);
-                }
+        Thread task = new Thread(() -> {
+            try {
+                Thread.sleep(2500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            for (URL url : PROVIDER_URL_SET) {
+                REGISTRY_SERVICE.register(url);
+                LOGGER.info("暴露服务：{}",url);
             }
         });
         task.start();

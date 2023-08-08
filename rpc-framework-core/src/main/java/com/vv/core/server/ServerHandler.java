@@ -20,6 +20,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     private static Logger logger = LoggerFactory.getLogger(ServerHandler.class);
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws InvocationTargetException, IllegalAccessException {
+        //服务端接收到了客户端的请求，需要保存这个连接直到服务发送回去
         ServerChannelReadData serverChannelReadData = new ServerChannelReadData();
         serverChannelReadData.setRpcProtocol((RpcProtocol) msg);
         serverChannelReadData.setChannelHandlerContext(ctx);
