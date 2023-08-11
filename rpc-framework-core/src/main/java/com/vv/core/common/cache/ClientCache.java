@@ -22,13 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2023/7/21-13:53
  */
 public class ClientCache {
-    /**
-     * 任务发送队列
-     */
     public static BlockingQueue<RpcInvocation> SEND_QUEUE = new ArrayBlockingQueue(5000);
-    /**
-     * 结果队列
-     */
     public static Map<String, Object> RESP_MAP = new ConcurrentHashMap<>();
     //provider名称 --> 该服务有哪些集群URL
     public static List<URL> SUBSCRIBE_SERVICE_LIST = new ArrayList<>();
@@ -40,29 +34,11 @@ public class ClientCache {
     //随机请求的map
     public static Map<String, ChannelFutureWrapper[]> SERVICE_ROUTER_MAP = new ConcurrentHashMap<>();
     public static ChannelFuturePollingRef CHANNEL_FUTURE_POLLING_REF = new ChannelFuturePollingRef();
-    /**
-     * 通道选择策略
-     */
     public static IRouter IROUTER;
-    /**
-     * 序列化策略
-     */
     public static SerializeFactory CLIENT_SERIALIZE_FACTORY;
-    /**
-     * 客户端全局配置
-     */
     public static ClientConfig CLIENT_CONFIG;
-    /**
-     * 调用链
-     */
     public static ClientFilterChain CLIENT_FILTER_CHAIN;
-    /**
-     * 注册中心
-     */
     public static AbstractRegister ABSTRACT_REGISTER;
-    /**
-     * spi机制扩展
-     */
     public static ExtensionLoader EXTENSION_LOADER = new ExtensionLoader();
 
 }

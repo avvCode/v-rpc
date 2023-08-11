@@ -123,7 +123,6 @@ public class Client {
 
     /**
      * 开始和各个provider建立连接
-     * 这个开始的时候就需要确定好了，并且连接通道也要建立好了
      */
     public void doConnectServer() {
         for (URL providerURL : SUBSCRIBE_SERVICE_LIST) {

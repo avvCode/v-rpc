@@ -19,9 +19,9 @@ import static com.vv.core.common.cache.ClientCache.*;
 
 
 /**
- *
+ * 职责： 当注册中心的节点新增或者移除或者权重变化的时候，这个类主要负责对内存中的url做变更
  * @author vv
- * @Description 职责： 当注册中心的节点新增或者移除或者权重变化的时候，这个类主要负责对内存中的url做变更
+ * @Description TODO
  * @date 2023/7/23-16:07
  */
 public class ConnectionHandler {
@@ -55,14 +55,9 @@ public class ConnectionHandler {
         String[] providerAddress = providerIp.split(":");
         String ip = providerAddress[0];
         Integer port = Integer.parseInt(providerAddress[1]);
-
         //到底这个channelFuture里面是什么
-        ChannelFuture channelFuture = bootstrap
-                .connect(ip, port)
-                .sync();
-
+        ChannelFuture channelFuture = bootstrap.connect(ip, port).sync();
         String providerURLInfo = URL_MAP.get(providerServiceName).get(providerIp);
-
         ProviderNodeInfo providerNodeInfo = URL.buildURLFromUrlStr(providerURLInfo);
         //todo 缺少一个将url进行转换的组件
         ChannelFutureWrapper channelFutureWrapper = new ChannelFutureWrapper();
@@ -71,15 +66,12 @@ public class ConnectionHandler {
         channelFutureWrapper.setPort(port);
         channelFutureWrapper.setWeight(providerNodeInfo.getWeight());
         channelFutureWrapper.setGroup(providerNodeInfo.getGroup());
-
         SERVER_ADDRESS.add(providerIp);
-
         List<ChannelFutureWrapper> channelFutureWrappers = CONNECT_MAP.get(providerServiceName);
         if (CommonUtils.isEmptyList(channelFutureWrappers)) {
             channelFutureWrappers = new ArrayList<>();
         }
         channelFutureWrappers.add(channelFutureWrapper);
-
         //例如com.sise.test.UserService会被放入到一个Map集合中，key是服务的名字，value是对应的channel通道的List集合
         CONNECT_MAP.put(providerServiceName, channelFutureWrappers);
         Selector selector = new Selector();
@@ -95,9 +87,7 @@ public class ConnectionHandler {
      * @throws InterruptedException
      */
     public static ChannelFuture createChannelFuture(String ip,Integer port) throws InterruptedException {
-        ChannelFuture channelFuture = bootstrap
-                .connect(ip, port)
-                .sync();
+        ChannelFuture channelFuture = bootstrap.connect(ip, port).sync();
         return channelFuture;
     }
 
@@ -119,7 +109,6 @@ public class ConnectionHandler {
                 }
             }
         }
-
     }
 
     /**

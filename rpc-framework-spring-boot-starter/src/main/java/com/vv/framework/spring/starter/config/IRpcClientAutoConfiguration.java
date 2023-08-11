@@ -27,14 +27,11 @@ public class IRpcClientAutoConfiguration implements BeanPostProcessor, Applicati
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IRpcClientAutoConfiguration.class);
 
-
-
     @Override
-    public Object postProcessAfterInitialization (Object bean, String beanName) throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         Field[] fields = bean.getClass().getDeclaredFields();
         for (Field field : fields) {
             if (field.isAnnotationPresent(VRpcReference.class)) {
-                //确保只初始化一次客户端配置
                 if (!hasInitClientConfig) {
                     client = new Client();
                     try {
@@ -46,12 +43,10 @@ public class IRpcClientAutoConfiguration implements BeanPostProcessor, Applicati
                     hasInitClientConfig = true;
                 }
                 needInitClient = true;
-                //获取指向远程服务的接口类
                 VRpcReference iRpcReference = field.getAnnotation(VRpcReference.class);
-                //将注解设置的字段包装成一个
                 try {
                     field.setAccessible(true);
-                    Object refObj;
+                    Object refObj = field.get(bean);
                     RpcReferenceWrapper rpcReferenceWrapper = new RpcReferenceWrapper();
                     rpcReferenceWrapper.setAimClass(field.getType());
                     rpcReferenceWrapper.setGroup(iRpcReference.group());
